@@ -16,6 +16,7 @@ import SettingsScreen from './src/screens/SettingsScreen.js';
 
 // Import services
 import LogbookService from './src/services/LogbookService.js';
+import UnifiedDataService from './src/services/UnifiedDataService.js';
 
 const Tab = createBottomTabNavigator();
 
@@ -35,6 +36,7 @@ const App = () => {
     const initializeApp = async () => {
       try {
         await LogbookService.initialize();
+        await UnifiedDataService.initialize();
         console.log('App initialized successfully');
       } catch (error) {
         console.error('App initialization failed:', error);
@@ -51,6 +53,7 @@ const App = () => {
     // Cleanup on unmount
     return () => {
       LogbookService.cleanup();
+      UnifiedDataService.cleanup();
     };
   }, []);
 
