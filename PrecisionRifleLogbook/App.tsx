@@ -13,6 +13,7 @@ import LogbookScreen from './src/screens/LogbookScreen.js';
 import LadderTestScreen from './src/screens/LadderTestScreen.js';
 import AnalyticsScreen from './src/screens/AnalyticsScreen.js';
 import SettingsScreen from './src/screens/SettingsScreen.js';
+import TestBackendScreen from './src/screens/TestBackendScreen.js';
 
 // Import services
 import LogbookService from './src/services/LogbookService.js';
@@ -133,6 +134,15 @@ const App = () => {
           options={{
             title: '⚙️ Settings',
             headerTitle: 'Settings & Data',
+          }}
+        />
+
+        <Tab.Screen 
+          name="test" 
+          component={TestBackendScreen}
+          options={{
+            title: '🧪 Test',
+            headerTitle: 'Backend Test',
           }}
         />
       </Tab.Navigator>
