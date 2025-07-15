@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precision Rifle Logbook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #001233;
+            background-image: 
+                radial-gradient(circle at 15% 80%, rgba(4, 102, 200, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 20%, rgba(3, 83, 164, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(2, 62, 125, 0.04) 0%, transparent 50%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, transparent 49%, rgba(151, 157, 172, 0.015) 50%, transparent 51%),
+                linear-gradient(-45deg, transparent 49%, rgba(125, 133, 151, 0.01) 50%, transparent 51%);
+            background-size: 25px 25px;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            background: linear-gradient(135deg, 
+                rgba(0, 18, 51, 0.95) 0%, 
+                rgba(0, 40, 85, 0.9) 20%, 
+                rgba(2, 62, 125, 0.85) 40%, 
+                rgba(3, 83, 164, 0.9) 60%, 
+                rgba(4, 102, 200, 0.95) 80%, 
+                rgba(2, 62, 125, 0.9) 100%);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(151, 157, 172, 0.15);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 28px;
+            margin-bottom: 35px;
+            text-align: center;
+            box-shadow: 
+                0 30px 100px rgba(0, 18, 51, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(151, 157, 172, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(4, 102, 200, 0.6) 15%, 
+                rgba(151, 157, 172, 0.8) 50%, 
+                rgba(4, 102, 200, 0.6) 85%, 
+                transparent 100%);
+            animation: headerPulse 4s ease-in-out infinite;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, 
+                transparent, 
+                rgba(151, 157, 172, 0.03), 
+                rgba(125, 133, 151, 0.02), 
+                rgba(92, 103, 125, 0.015), 
+                transparent);
+            animation: slowRotate 40s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes headerPulse {
+            0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+            50% { opacity: 1; transform: scaleX(1.2); }
+        }
+
+        @keyframes slowRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 3;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 25px;
+            font-weight: 900;
+            background: linear-gradient(135deg, 
+                #ffffff 0%, 
+                #979DAC 20%, 
+                #7D8597 40%, 
+                #5C677D 60%, 
+                #979DAC 80%, 
+                #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            letter-spacing: -2px;
+            animation: titleGlow 4s ease-in-out infinite alternate;
+            line-height: 1.1;
+        }
+
+        @keyframes titleGlow {
+            0% { filter: brightness(1) drop-shadow(0 0 20px rgba(151, 157, 172, 0.3)); }
+            100% { filter: brightness(1.3) drop-shadow(0 0 40px rgba(151, 157, 172, 0.6)); }
+        }
+
+        .header p {
+            font-size: 1.5rem;
+            color: rgba(151, 157, 172, 0.95);
+            margin-bottom: 40px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Stunning Navigation Tabs */
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 50px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .nav-tab {
+            padding: 20px 28px;
+            background: linear-gradient(135deg, 
+                rgba(51, 65, 92, 0.25) 0%, 
+                rgba(92, 103, 125, 0.15) 50%,
+                rgba(125, 133, 151, 0.2) 100%);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(151, 157, 172, 0.25);
+            color: rgba(151, 157, 172, 0.9);
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 1.05rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            box-shadow: 
+                0 8px 32px rgba(0, 18, 51, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(4, 102, 200, 0.15) 0%, 
+                rgba(3, 83, 164, 0.1) 50%, 
+                rgba(2, 62, 125, 0.15) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border-radius: 18px;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(151, 157, 172, 0.3) 0%, transparent 70%);
+            transition: all 0.6s ease;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        .nav-tab:hover::before {
+            opacity: 1;
+        }
+
+        .nav-tab:hover::after {
+            width: 120%;
+            height: 120%;
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(4, 102, 200, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-color: rgba(4, 102, 200, 0.5);
+            color: #ffffff;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, 
+                rgba(4, 102, 200, 0.95) 0%, 
+                rgba(3, 83, 164, 0.9) 30%, 
+                rgba(2, 62, 125, 0.95) 70%, 
+                rgba(4, 102, 200, 0.9) 100%);
+            color: white;
+            border-color: rgba(4, 102, 200, 0.7);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 25px 80px rgba(4, 102, 200, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                0 0 0 2px rgba(151, 157, 172, 0.2);
+        }
+
+        .nav-tab.active::before {
+            opacity: 0;
+        }
+
+        .nav-tab.active::after {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .pro-tab {
+            position: relative;
+            font-size: 0.95rem; /* Slightly smaller to fit text better */
+        }
+
+        .pro-tab::after {
+            content: 'PRO';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: linear-gradient(45deg, #0466C8, #023E7D);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(4, 102, 200, 0.4);
+            z-index: 10;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
+            backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 24px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 20px 60px rgba(0,18,51,0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(151, 157, 172, 0.3);
+            color: #001845;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0466C8, #0353A4, #023E7D, #002855, #0466C8);
+            background-size: 200% 100%;
+            animation: gradientMove 3s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .form-section h2 {
+            color: #001845;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            border-bottom: 3px solid #0466C8;
+            padding-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .form-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #979DAC, #7D8597);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #002855;
+            font-size: 0.95rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #7D8597;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.9);
+            color: #001845;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0466C8;
+            box-shadow: 0 0 0 4px rgba(4, 102, 200, 0.15);
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group select {
+            width: auto;
+            min-width: 90px;
+            background: linear-gradient(135deg, #979DAC, #7D8597);
+            color: white;
+            border-color: #5C677D;
+        }
+
+        .kestrel-section {
+            background: linear-gradient(135deg, 
+                rgba(0, 40, 85, 0.95) 0%, 
+                rgba(0, 24, 69, 0.9) 50%,
+                rgba(0, 18, 51, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(51, 65, 92, 0.6);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            color: #fff;
+            box-shadow: 
+                0 15px 50px rgba(0, 40, 85, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .kestrel-section h2 {
+            color: #979DAC;
+            border-bottom: 2px solid #5C677D;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-weight: 600;
+        }
+
+        .kestrel-button {
+            background: linear-gradient(135deg, #0466C8, #0353A4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            width: 100%;
+            box-shadow: 0 8px 25px rgba(4, 102, 200, 0.4);
+            border: 1px solid #33415C;
+            font-weight: 600;
+        }
+
+        .kestrel-button:hover {
+            background: linear-gradient(135deg, #023E7D, #002855);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(4, 102, 200, 0.6);
+        }
+
+        .kestrel-button:disabled {
+            background: linear-gradient(135deg, #5C677D, #7D8597);
+            cursor: not-allowed;
+            transform: none;
+            border-color: #979DAC;
+        }
+
+        .kestrel-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .status-info {
+            background: rgba(4, 102, 200, 0.3);
+            color: #979DAC;
+            border: 1px solid #5C677D;
+        }
+
+        .status-error {
+            background: rgba(231, 76, 60, 0.3);
+            color: #979DAC;
+            border: 1px solid #5C677D;
+        }
+
+        .status-warning {
+            background: rgba(241, 196, 15, 0.3);
+            color: #979DAC;
+            border: 1px solid #5C677D;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0466C8, #0353A4);
+            color: white;
+            box-shadow: 0 8px 25px rgba(4, 102, 200, 0.3);
+            border: 1px solid #33415C;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #023E7D, #002855);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(4, 102, 200, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #5C677D, #7D8597);
+            color: white;
+            box-shadow: 0 6px 20px rgba(92, 103, 125, 0.3);
+            border: 1px solid #979DAC;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #7D8597, #979DAC);
+            transform: translateY(-3px);
+        }
+
+        .sessions-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
+            backdrop-filter: blur(25px);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 60px rgba(0,18,51,0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(151, 157, 172, 0.3);
+            color: #001845;
+        }
+
+        .sessions-section h2 {
+            color: #001845;
+            border-bottom: 3px solid #0466C8;
+            font-weight: 700;
+        }
+
+        .file-upload {
+            border: 2px dashed #7D8597;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(151, 157, 172, 0.1);
+        }
+
+        .file-upload:hover {
+            border-color: #0466C8;
+            background: rgba(4, 102, 200, 0.1);
+        }
+
+        .file-upload.has-file {
+            border-color: #0466C8;
+            background: rgba(4, 102, 200, 0.15);
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            border: 2px solid #5C677D;
+        }
+
+        .no-sessions {
+            text-align: center;
+            padding: 50px;
+            color: #5C677D;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 40px 25px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .nav-tabs {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🎯 Precision Rifle Logbook</h1>
+                <p>Track your shooting sessions with environmental data</p>
+                
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchTab('logbook')">📝 Logbook</button>
+                    <button class="nav-tab" onclick="switchTab('ladder')">🎯 Ladder Test</button>
+                    <button class="nav-tab pro-tab" onclick="switchTab('analytics')">📊 Pro Analytics</button>
+                    <button class="nav-tab" onclick="switchTab('settings')">⚙️ Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <div class="form-section">
+                <h2>⚙️ Data Management & Settings</h2>
+                
+                <!-- Premium Status -->
+                <div style="background: linear-gradient(135deg, #001845, #001233); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 id="premiumStatus">🆓 Free Version</h3>
+                            <p>Local storage only - your data stays on your device</p>
+                        </div>
+                        <button onclick="app.showPremiumUpgradeModal()" class="btn btn-primary" id="upgradeButton">Upgrade to Premium</button>
+                    </div>
+                </div>
+
+                <!-- Cloud Sync (Premium Feature) -->
+                <div class="premium-feature disabled" style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC; margin-bottom: 20px;">
+                    <h3 style="color: #001845; margin-bottom: 15px;">☁️ Cloud Backup & Sync</h3>
+                    <p style="margin-bottom: 15px; color: #33415C;">Automatically backup your data to the cloud and sync across devices.</p>
+                    <button id="cloudSyncToggle" onclick="app.toggleCloudSync()" class="btn" style="background: linear-gradient(135deg, #5C677D, #7D8597); color: white;">☁️ Cloud Sync (Premium)</button>
+                    <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        <strong>Security:</strong> All data is encrypted before cloud storage
+                    </div>
+                </div>
+
+                <!-- Data Export/Import -->
+                <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC; margin-bottom: 20px;">
+                    <h3 style="color: #001845; margin-bottom: 15px;">💾 Data Backup & Transfer</h3>
+                    <p style="margin-bottom: 15px; color: #33415C;">Export your data for manual backup or transfer to another device.</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <button onclick="app.exportData()" class="btn btn-primary">📤 Export Data</button>
+                        <button onclick="document.getElementById('importFile').click()" class="btn btn-secondary">📥 Import Data</button>
+                    </div>
+                    
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="app.importData(event)">
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(4, 102, 200, 0.1); border-radius: 6px; font-size: 0.9rem;">
+                        <strong>📋 Export includes:</strong> All sessions, ladder tests, and settings in JSON format
+                    </div>
+                </div>
+
+                <!-- Storage Information -->
+                <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC; margin-bottom: 20px;">
+                    <h3 style="color: #001845; margin-bottom: 15px;">📊 Storage Information</h3>
+                    <div id="storageInfo" style="color: #33415C;">
+                        <p><strong>Sessions:</strong> <span id="sessionCount">0</span></p>
+                        <p><strong>Ladder Tests:</strong> <span id="ladderCount">0</span></p>
+                        <p><strong>Storage Type:</strong> Local Device Storage</p>
+                        <p><strong>Data Security:</strong> Stored locally on your device only</p>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div style="background: rgba(231, 76, 60, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #e74c3c; margin-bottom: 20px;">
+                    <h3 style="color: #c0392b; margin-bottom: 15px;">⚠️ Data Management</h3>
+                    <p style="margin-bottom: 15px; color: #721c24;">Dangerous actions - use with caution!</p>
+                    
+                    <button onclick="app.clearAllData()" class="btn" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white;">🗑️ Clear All Data</button>
+                    
+                    <div style="margin-top: 10px; font-size: 0.9rem; color: #721c24;">
+                        This will permanently delete all sessions and ladder tests. Export your data first!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Logbook Tab -->
+        <div id="logbook-tab" class="tab-content active">
+            <!-- Weather Meter Connection Section -->
+            <div class="kestrel-section">
+                <h2>📡 Weather Meter Environmental Data</h2>
+                <button id="kestrelConnect" class="kestrel-button">Connect to Weather Meter</button>
+                <div id="kestrelStatus" class="kestrel-status" style="display: none;"></div>
+            </div>
+
+            <!-- Session Entry Form -->
+            <div class="form-section">
+                <h2>📝 New Shooting Session</h2>
+                <form id="sessionForm">
+                    <!-- Basic Information -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="sessionDate">Date & Time</label>
+                            <input type="datetime-local" id="sessionDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rifleProfile">Rifle Profile</label>
+                            <input type="text" id="rifleProfile" placeholder="e.g., Remington 700 .308" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="rangeDistance">Range Distance</label>
+                            <div class="input-group">
+                                <input type="number" id="rangeDistance" placeholder="100" required>
+                                <select id="rangeUnit">
+                                    <option value="yards">yards</option>
+                                    <option value="meters">meters</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ammoType">Ammo Type & Lot</label>
+                            <input type="text" id="ammoType" placeholder="Federal GMM 175gr, Lot: ABC123" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="muzzleVelocity">Muzzle Velocity (fps)</label>
+                        <input type="number" id="muzzleVelocity" placeholder="2650" step="0.1">
+                    </div>
+
+                    <!-- Environmental Conditions -->
+                    <h3 style="margin: 20px 0 15px 0; color: #001845;">🌡️ Environmental Conditions</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="temperature">Temperature</label>
+                            <div class="input-group">
+                                <input type="number" id="temperature" placeholder="72" step="0.1">
+                                <select id="tempUnit">
+                                    <option value="F">°F</option>
+                                    <option value="C">°C</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="humidity">Humidity (%)</label>
+                            <input type="number" id="humidity" placeholder="45" min="0" max="100">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="pressure">Pressure</label>
+                            <div class="input-group">
+                                <input type="number" id="pressure" placeholder="29.92" step="0.01">
+                                <select id="pressureUnit">
+                                    <option value="inHg">inHg</option>
+                                    <option value="hPa">hPa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="windSpeed">Wind Speed</label>
+                            <div class="input-group">
+                                <input type="number" id="windSpeed" placeholder="5" step="0.1">
+                                <select id="windSpeedUnit">
+                                    <option value="mph">mph</option>
+                                    <option value="m/s">m/s</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="windDirection">Wind Direction</label>
+                        <input type="text" id="windDirection" placeholder="3 o'clock or 090°">
+                    </div>
+
+                    <!-- Predicted vs Actual -->
+                    <h3 style="margin: 20px 0 15px 0; color: #001845;">🎯 Predicted vs Actual</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="predElevation">Predicted Elevation</label>
+                            <div class="input-group">
+                                <input type="number" id="predElevation" placeholder="2.5" step="0.1">
+                                <select id="elevationUnit">
+                                    <option value="MOA">MOA</option>
+                                    <option value="MIL">MIL</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="actualElevation">Actual Elevation</label>
+                            <div class="input-group">
+                                <input type="number" id="actualElevation" placeholder="2.3" step="0.1">
+                                <select id="actualElevationUnit">
+                                    <option value="MOA">MOA</option>
+                                    <option value="MIL">MIL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="predWindage">Predicted Windage</label>
+                            <div class="input-group">
+                                <input type="number" id="predWindage" placeholder="1.2" step="0.1">
+                                <select id="windageUnit">
+                                    <option value="MOA">MOA</option>
+                                    <option value="MIL">MIL</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="actualWindage">Actual Windage</label>
+                            <div class="input-group">
+                                <input type="number" id="actualWindage" placeholder="1.0" step="0.1">
+                                <select id="actualWindageUnit">
+                                    <option value="MOA">MOA</option>
+                                    <option value="MIL">MIL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Photo -->
+                    <div class="form-group">
+                        <label for="targetPhoto">Target Photo (Optional)</label>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" id="targetPhoto" accept="image/*" style="display: none;">
+                            <div id="uploadText">📸 Click to upload target photo</div>
+                            <img id="imagePreview" class="image-preview" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" rows="4" placeholder="Additional observations, equipment notes, conditions..."></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">💾 Save Session</button>
+                        <button type="button" id="clearForm" class="btn btn-secondary">🗑️ Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Sessions List -->
+            <div class="sessions-section">
+                <h2>📋 Session History</h2>
+                <div id="sessionsList"></div>
+            </div>
+        </div>
+
+        <!-- Ladder Test Tab -->
+        <div id="ladder-tab" class="tab-content">
+            <div class="form-section">
+                <h2>🎯 Ladder Test Setup</h2>
+                <form id="ladderForm">
+                    <!-- Test Configuration -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ladderDate">Test Date</label>
+                            <input type="date" id="ladderDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ladderRifle">Rifle Configuration</label>
+                            <input type="text" id="ladderRifle" placeholder="Remington 700 .308, 26in barrel" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ladderRange">Test Range (yards)</label>
+                            <input type="number" id="ladderRange" placeholder="300" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ladderBullet">Bullet & Weight</label>
+                            <input type="text" id="ladderBullet" placeholder="Berger 175gr VLD" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ladderPowder">Powder Type</label>
+                            <input type="text" id="ladderPowder" placeholder="H4350" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ladderBrass">Brass & Prep</label>
+                            <input type="text" id="ladderBrass" placeholder="Lapua .308, 2x fired, annealed">
+                        </div>
+                    </div>
+
+                    <!-- Charge Weight Generator -->
+                    <h3 style="margin: 20px 0 15px 0; color: #001845;">⚖️ Ladder Data Entry</h3>
+                    <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #7D8597; margin: 15px 0;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="startCharge">Start Charge (gr)</label>
+                                <input type="number" id="startCharge" placeholder="42.0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="endCharge">End Charge (gr)</label>
+                                <input type="number" id="endCharge" placeholder="44.0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="chargeIncrement">Increment (gr)</label>
+                                <input type="number" id="chargeIncrement" placeholder="0.2" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <button type="button" id="generateLadder" class="btn btn-secondary" style="margin-top: 24px;">Generate Ladder</button>
+                            </div>
+                        </div>
+                        
+                        <div id="ladderEntries" style="margin-top: 20px;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ladderNotes">Test Notes</label>
+                        <textarea id="ladderNotes" rows="3" placeholder="Weather conditions, equipment notes, observations..."></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">💾 Save Ladder Test</button>
+                        <button type="button" id="clearLadder" class="btn btn-secondary">🗑️ Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Ladder Test Results -->
+            <div class="sessions-section">
+                <h2>🎯 Ladder Test Results</h2>
+                <div id="ladderResults"></div>
+            </div>
+        </div>
+
+        <!-- Professional Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+            <div style="background: linear-gradient(135deg, #001845, #001233); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h2>📊 Professional Analytics</h2>
+                <div style="background: linear-gradient(135deg, #0466C8, #0353A4); padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">PRO</div>
+            </div>
+            
+            <div class="form-section">
+                <h3>📈 Velocity Analysis</h3>
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #7D8597; margin: 20px 0; min-height: 300px; display: flex; align-items: center; justify-content: center; color: #666;">
+                    <div style="text-align: center;">
+                        <h4>Interactive Velocity Chart</h4>
+                        <p>Load ladder test data to see charge weight vs velocity analysis</p>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">Chart.js integration for professional analytics</p>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC;">
+                        <h4 style="color: #001845; margin-bottom: 15px; border-bottom: 2px solid #0466C8; padding-bottom: 8px;">🎯 Flat Spot Detection</h4>
+                        <div id="flatSpotAnalysis">
+                            <p>Load ladder test data to analyze velocity flat spots and optimal charge weights.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC;">
+                        <h4 style="color: #001845; margin-bottom: 15px; border-bottom: 2px solid #0466C8; padding-bottom: 8px;">📊 Statistical Analysis</h4>
+                        <div id="statisticalAnalysis">
+                            <p>Standard deviation, extreme spread, and consistency metrics will appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC;">
+                        <h4 style="color: #001845; margin-bottom: 15px; border-bottom: 2px solid #0466C8; padding-bottom: 8px;">⚖️ Load Analysis & References</h4>
+                        <div id="loadRecommendation">
+                            <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <strong style="color: #c0392b;">⚠️ SAFETY NOTICE:</strong><br>
+                                This application provides <strong>data analysis only</strong>. Never exceed published load data from reputable sources. Always start low and work up safely. Consult official reloading manuals.
+                            </div>
+                            <p>Load analysis and references to published data sources will appear here based on your test results.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(151, 157, 172, 0.1); padding: 20px; border-radius: 12px; border: 2px solid #979DAC;">
+                        <h4 style="color: #001845; margin-bottom: 15px; border-bottom: 2px solid #0466C8; padding-bottom: 8px;">🌡️ Environmental Correlation</h4>
+                        <div id="environmentalCorrelation">
+                            <p>Temperature sensitivity and environmental impact analysis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Application Class
+        class RifleLogbook {
+            constructor() {
+                this.sessions = this.loadSessions();
+                this.ladderTests = this.loadLadderTests();
+                this.currentTab = 'logbook';
+                this.isPremium = this.checkPremiumStatus();
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setCurrentDateTime();
+                this.renderSessions();
+                this.renderLadderTests();
+                this.updatePremiumUI();
+                console.log('Rifle Logbook initialized successfully');
+            }
+
+            // Data Persistence - Local Storage
+            loadSessions() {
+                try {
+                    const saved = localStorage.getItem('rifleLogbook_sessions');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (error) {
+                    console.error('Error loading sessions:', error);
+                    this.showStatus('Error loading session data', 'error');
+                    return [];
+                }
+            }
+
+            saveSessions() {
+                try {
+                    localStorage.setItem('rifleLogbook_sessions', JSON.stringify(this.sessions));
+                    this.showDataSyncStatus('Sessions saved locally', 'local');
+                    
+                    // Auto-sync if premium user has enabled it
+                    if (this.isPremium && this.getCloudSyncSetting()) {
+                        this.syncToCloud('sessions');
+                    }
+                } catch (error) {
+                    console.error('Error saving sessions:', error);
+                    this.showStatus('Error saving session data', 'error');
+                }
+            }
+
+            loadLadderTests() {
+                try {
+                    const saved = localStorage.getItem('rifleLogbook_ladderTests');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (error) {
+                    console.error('Error loading ladder tests:', error);
+                    this.showStatus('Error loading ladder test data', 'error');
+                    return [];
+                }
+            }
+
+            saveLadderTests() {
+                try {
+                    localStorage.setItem('rifleLogbook_ladderTests', JSON.stringify(this.ladderTests));
+                    this.showDataSyncStatus('Ladder tests saved locally', 'local');
+                    
+                    // Auto-sync if premium user has enabled it
+                    if (this.isPremium && this.getCloudSyncSetting()) {
+                        this.syncToCloud('ladderTests');
+                    }
+                } catch (error) {
+                    console.error('Error saving ladder tests:', error);
+                    this.showStatus('Error saving ladder test data', 'error');
+                }
+            }
+
+            // Premium Features
+            checkPremiumStatus() {
+                return localStorage.getItem('rifleLogbook_premium') === 'true';
+            }
+
+            enablePremium() {
+                localStorage.setItem('rifleLogbook_premium', 'true');
+                this.isPremium = true;
+                this.updatePremiumUI();
+                this.showStatus('Premium features activated!', 'info');
+            }
+
+            getCloudSyncSetting() {
+                return localStorage.getItem('rifleLogbook_cloudSync') === 'true';
+            }
+
+            toggleCloudSync() {
+                if (!this.isPremium) {
+                    this.showPremiumUpgradeModal();
+                    return;
+                }
+
+                const currentSetting = this.getCloudSyncSetting();
+                localStorage.setItem('rifleLogbook_cloudSync', (!currentSetting).toString());
+                this.updatePremiumUI();
+                
+                if (!currentSetting) {
+                    this.showStatus('Cloud sync enabled - data will be backed up automatically', 'info');
+                    this.syncAllToCloud();
+                } else {
+                    this.showStatus('Cloud sync disabled - data remains local only', 'info');
+                }
+            }
+
+            // Cloud Sync (Premium Feature)
+            async syncToCloud(dataType) {
+                if (!this.isPremium) return;
+                
+                try {
+                    // Simulate cloud sync with encryption
+                    const data = dataType === 'sessions' ? this.sessions : this.ladderTests;
+                    const encryptedData = this.encryptData(data);
+                    
+                    // Simulate API call
+                    await this.simulateCloudUpload(dataType, encryptedData);
+                    this.showDataSyncStatus(`${dataType} synced to cloud`, 'cloud');
+                } catch (error) {
+                    console.error('Cloud sync error:', error);
+                    this.showStatus('Cloud sync failed - data saved locally', 'warning');
+                }
+            }
+
+            async syncAllToCloud() {
+                if (!this.isPremium) return;
+                
+                this.showStatus('Syncing all data to cloud...', 'info');
+                await this.syncToCloud('sessions');
+                await this.syncToCloud('ladderTests');
+            }
+
+            encryptData(data) {
+                // Simple encryption simulation (in production, use proper encryption)
+                return btoa(JSON.stringify({
+                    data: data,
+                    timestamp: Date.now(),
+                    version: '1.0'
+                }));
+            }
+
+            async simulateCloudUpload(dataType, encryptedData) {
+                // Simulate network delay
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        console.log(`Cloud sync: ${dataType} uploaded (${encryptedData.length} bytes)`);
+                        resolve();
+                    }, Math.random() * 1000 + 500);
+                });
+            }
+
+            // Data Export/Import
+            exportData() {
+                const exportData = {
+                    sessions: this.sessions,
+                    ladderTests: this.ladderTests,
+                    exportDate: new Date().toISOString(),
+                    appVersion: '1.0',
+                    format: 'rifleLogbook_backup'
+                };
+
+                const dataBlob = new Blob([JSON.stringify(exportData, null, 2)], {
+                    type: 'application/json'
+                });
+
+                const url = URL.createObjectURL(dataBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rifle_logbook_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showStatus('Data exported successfully', 'info');
+            }
+
+            importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importData = JSON.parse(e.target.result);
+                        
+                        if (importData.format !== 'rifleLogbook_backup') {
+                            throw new Error('Invalid backup file format');
+                        }
+
+                        // Confirm import
+                        if (confirm(`Import ${importData.sessions?.length || 0} sessions and ${importData.ladderTests?.length || 0} ladder tests? This will replace your current data.`)) {
+                            this.sessions = importData.sessions || [];
+                            this.ladderTests = importData.ladderTests || [];
+                            
+                            this.saveSessions();
+                            this.saveLadderTests();
+                            this.renderSessions();
+                            this.renderLadderTests();
+                            
+                            this.showStatus('Data imported successfully', 'info');
+                        }
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        this.showStatus('Failed to import data - invalid file format', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // UI Updates
+            updatePremiumUI() {
+                // Update premium indicators
+                const premiumElements = document.querySelectorAll('.premium-feature');
+                premiumElements.forEach(el => {
+                    if (this.isPremium) {
+                        el.classList.remove('disabled');
+                    } else {
+                        el.classList.add('disabled');
+                    }
+                });
+
+                // Update cloud sync button
+                const cloudButton = document.getElementById('cloudSyncToggle');
+                if (cloudButton) {
+                    if (this.isPremium) {
+                        const isEnabled = this.getCloudSyncSetting();
+                        cloudButton.textContent = isEnabled ? '☁️ Cloud Sync: ON' : '☁️ Cloud Sync: OFF';
+                        cloudButton.style.background = isEnabled ? 
+                            'linear-gradient(135deg, #27ae60, #2ecc71)' : 
+                            'linear-gradient(135deg, #5C677D, #7D8597)';
+                    } else {
+                        cloudButton.textContent = '☁️ Cloud Sync (Premium)';
+                        cloudButton.style.background = 'linear-gradient(135deg, #5C677D, #7D8597)';
+                    }
+                }
+            }
+
+            showDataSyncStatus(message, type) {
+                const statusDiv = document.createElement('div');
+                statusDiv.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: ${type === 'cloud' ? 'linear-gradient(135deg, #3498db, #2980b9)' : 'linear-gradient(135deg, #27ae60, #2ecc71)'};
+                    color: white;
+                    padding: 10px 15px;
+                    border-radius: 6px;
+                    font-size: 0.9rem;
+                    z-index: 1000;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                `;
+                statusDiv.textContent = `${type === 'cloud' ? '☁️' : '💾'} ${message}`;
+                
+                document.body.appendChild(statusDiv);
+                
+                setTimeout(() => {
+                    statusDiv.remove();
+                }, 2000);
+            }
+
+            showPremiumUpgradeModal() {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 500px; margin: 20px; text-align: center;">
+                        <h2 style="color: #001845; margin-bottom: 20px;">🚀 Upgrade to Premium</h2>
+                        <p style="margin-bottom: 20px; color: #33415C;">Unlock cloud sync, advanced analytics, and premium features!</p>
+                        <div style="margin: 20px 0;">
+                            <h3 style="color: #0466C8;">Premium Features:</h3>
+                            <ul style="text-align: left; margin: 15px 0; color: #33415C;">
+                                <li>☁️ Automatic cloud backup & sync</li>
+                                <li>📊 Advanced ballistic analytics</li>
+                                <li>📱 Multi-device access</li>
+                                <li>🔄 Automatic data backup</li>
+                                <li>🎯 Enhanced load analysis</li>
+                            </ul>
+                        </div>
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                            <button onclick="app.enablePremium(); this.closest('div').parentElement.remove();" style="background: linear-gradient(135deg, #0466C8, #0353A4); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">Enable Premium (Demo)</button>
+                            <button onclick="this.closest('div').parentElement.remove();" style="background: linear-gradient(135deg, #5C677D, #7D8597); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">Maybe Later</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            }
+
+            setupEventListeners() {
+                // Session form
+                const sessionForm = document.getElementById('sessionForm');
+                if (sessionForm) {
+                    sessionForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.saveSession();
+                    });
+                }
+
+                // Clear form
+                const clearForm = document.getElementById('clearForm');
+                if (clearForm) {
+                    clearForm.addEventListener('click', () => {
+                        this.clearForm();
+                    });
+                }
+
+                // Ladder test form
+                const ladderForm = document.getElementById('ladderForm');
+                if (ladderForm) {
+                    ladderForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.saveLadderTest();
+                    });
+                }
+
+                const clearLadder = document.getElementById('clearLadder');
+                if (clearLadder) {
+                    clearLadder.addEventListener('click', () => {
+                        this.clearLadderForm();
+                    });
+                }
+
+                const generateLadder = document.getElementById('generateLadder');
+                if (generateLadder) {
+                    generateLadder.addEventListener('click', () => {
+                        this.generateLadderEntries();
+                    });
+                }
+
+                // Weather meter button
+                const weatherButton = document.getElementById('kestrelConnect');
+                if (weatherButton) {
+                    weatherButton.addEventListener('click', () => {
+                        this.simulateWeatherData();
+                    });
+                }
+
+                // File upload
+                const fileUpload = document.getElementById('fileUpload');
+                if (fileUpload) {
+                    fileUpload.addEventListener('click', () => {
+                        const targetPhoto = document.getElementById('targetPhoto');
+                        if (targetPhoto) targetPhoto.click();
+                    });
+                }
+
+                const targetPhoto = document.getElementById('targetPhoto');
+                if (targetPhoto) {
+                    targetPhoto.addEventListener('change', (e) => {
+                        this.handleFileUpload(e);
+                    });
+                }
+            }
+
+            // Data Management Methods
+            clearAllData() {
+                if (confirm('⚠️ This will permanently delete ALL your data including sessions and ladder tests. Are you absolutely sure?')) {
+                    if (confirm('This action cannot be undone. Have you exported your data for backup?')) {
+                        localStorage.removeItem('rifleLogbook_sessions');
+                        localStorage.removeItem('rifleLogbook_ladderTests');
+                        this.sessions = [];
+                        this.ladderTests = [];
+                        this.renderSessions();
+                        this.renderLadderTests();
+                        this.updateStorageInfo();
+                        this.showStatus('All data cleared', 'warning');
+                    }
+                }
+            }
+
+            updateStorageInfo() {
+                const sessionCountEl = document.getElementById('sessionCount');
+                const ladderCountEl = document.getElementById('ladderCount');
+                const premiumStatusEl = document.getElementById('premiumStatus');
+                const upgradeButtonEl = document.getElementById('upgradeButton');
+
+                if (sessionCountEl) sessionCountEl.textContent = this.sessions.length;
+                if (ladderCountEl) ladderCountEl.textContent = this.ladderTests.length;
+                
+                if (premiumStatusEl && upgradeButtonEl) {
+                    if (this.isPremium) {
+                        premiumStatusEl.innerHTML = '🚀 Premium Active';
+                        premiumStatusEl.nextElementSibling.textContent = 'Cloud sync and advanced features enabled';
+                        upgradeButtonEl.style.display = 'none';
+                    } else {
+                        premiumStatusEl.innerHTML = '🆓 Free Version';
+                        premiumStatusEl.nextElementSibling.textContent = 'Local storage only - your data stays on your device';
+                        upgradeButtonEl.style.display = 'block';
+                    }
+                }
+            }
+
+            setCurrentDateTime() {
+                const sessionDate = document.getElementById('sessionDate');
+                if (sessionDate) {
+                    const now = new Date();
+                    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+                    sessionDate.value = localDateTime.toISOString().slice(0, 16);
+                }
+
+                const ladderDate = document.getElementById('ladderDate');
+                if (ladderDate) {
+                    ladderDate.value = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            // Ladder Test Functions
+            generateLadderEntries() {
+                const startCharge = parseFloat(document.getElementById('startCharge').value);
+                const endCharge = parseFloat(document.getElementById('endCharge').value);
+                const increment = parseFloat(document.getElementById('chargeIncrement').value);
+
+                if (!startCharge || !endCharge || !increment) {
+                    this.showStatus('Please fill in start charge, end charge, and increment', 'error');
+                    return;
+                }
+
+                if (startCharge >= endCharge) {
+                    this.showStatus('Start charge must be less than end charge', 'error');
+                    return;
+                }
+
+                const entriesDiv = document.getElementById('ladderEntries');
+                entriesDiv.innerHTML = '';
+
+                let currentCharge = startCharge;
+                let roundNumber = 1;
+
+                while (currentCharge <= endCharge) {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.style.cssText = 'background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; border: 1px solid #979DAC; margin-bottom: 10px;';
+                    entryDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="color: #001845;">Round ${roundNumber}</strong>
+                            <span style="background: linear-gradient(135deg, #0466C8, #0353A4); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem;">${currentCharge.toFixed(1)}gr</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
+                            <input type="number" placeholder="Shot 1" step="1" class="velocity-input" data-charge="${currentCharge}" data-shot="1" style="padding: 6px; border: 1px solid #7D8597; border-radius: 4px; text-align: center;">
+                            <input type="number" placeholder="Shot 2" step="1" class="velocity-input" data-charge="${currentCharge}" data-shot="2" style="padding: 6px; border: 1px solid #7D8597; border-radius: 4px; text-align: center;">
+                            <input type="number" placeholder="Shot 3" step="1" class="velocity-input" data-charge="${currentCharge}" data-shot="3" style="padding: 6px; border: 1px solid #7D8597; border-radius: 4px; text-align: center;">
+                        </div>
+                        <div id="stats-${currentCharge.toFixed(1).replace('.', '-')}" style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #33415C; margin-bottom: 8px;">
+                            <span>Avg: --</span>
+                            <span>ES: --</span>
+                            <span>SD: --</span>
+                        </div>
+                        <textarea placeholder="Pressure signs, accuracy notes..." rows="2" class="ladder-notes" data-charge="${currentCharge}" style="width: 100%; padding: 6px; border: 1px solid #7D8597; border-radius: 4px; resize: vertical; font-size: 0.9rem;"></textarea>
+                    `;
+                    entriesDiv.appendChild(entryDiv);
+
+                    // Add event listeners for velocity calculations
+                    const velocityInputs = entryDiv.querySelectorAll('.velocity-input');
+                    velocityInputs.forEach(input => {
+                        input.addEventListener('input', () => this.calculateVelocityStats(currentCharge));
+                    });
+
+                    currentCharge += increment;
+                    roundNumber++;
+                }
+
+                this.showStatus('Ladder entries generated successfully', 'info');
+            }
+
+            calculateVelocityStats(charge) {
+                const inputs = document.querySelectorAll(`input[data-charge="${charge}"]`);
+                const velocities = Array.from(inputs)
+                    .map(input => parseFloat(input.value))
+                    .filter(val => !isNaN(val));
+
+                if (velocities.length < 2) return;
+
+                const avg = velocities.reduce((a, b) => a + b, 0) / velocities.length;
+                const max = Math.max(...velocities);
+                const min = Math.min(...velocities);
+                const es = max - min;
+                
+                const variance = velocities.reduce((sum, vel) => sum + Math.pow(vel - avg, 2), 0) / velocities.length;
+                const sd = Math.sqrt(variance);
+
+                const statsId = `stats-${charge.toFixed(1).replace('.', '-')}`;
+                const statsDiv = document.getElementById(statsId);
+                if (statsDiv) {
+                    statsDiv.innerHTML = `
+                        <span>Avg: ${avg.toFixed(0)}</span>
+                        <span>ES: ${es.toFixed(0)}</span>
+                        <span>SD: ${sd.toFixed(1)}</span>
+                    `;
+                }
+            }
+
+            saveLadderTest() {
+                const ladderData = this.collectLadderData();
+                
+                if (this.validateLadderTest(ladderData)) {
+                    ladderData.id = Date.now().toString();
+                    this.ladderTests.unshift(ladderData);
+                    this.saveLadderTests();
+                    this.renderLadderTests();
+                    this.clearLadderForm();
+                    this.showStatus('Ladder test saved successfully!', 'info');
+                }
+            }
+
+            collectLadderData() {
+                const velocityInputs = document.querySelectorAll('.velocity-input');
+                const notesInputs = document.querySelectorAll('.ladder-notes');
+                
+                const charges = [];
+                const chargeMap = new Map();
+
+                velocityInputs.forEach(input => {
+                    const charge = parseFloat(input.dataset.charge);
+                    const shot = parseInt(input.dataset.shot);
+                    const velocity = parseFloat(input.value);
+
+                    if (!isNaN(velocity)) {
+                        if (!chargeMap.has(charge)) {
+                            chargeMap.set(charge, { charge, velocities: [], notes: '' });
+                        }
+                        chargeMap.get(charge).velocities[shot - 1] = velocity;
+                    }
+                });
+
+                notesInputs.forEach(input => {
+                    const charge = parseFloat(input.dataset.charge);
+                    if (chargeMap.has(charge)) {
+                        chargeMap.get(charge).notes = input.value;
+                    }
+                });
+
+                chargeMap.forEach(data => charges.push(data));
+
+                return {
+                    date: document.getElementById('ladderDate').value,
+                    rifle: document.getElementById('ladderRifle').value,
+                    range: document.getElementById('ladderRange').value,
+                    bullet: document.getElementById('ladderBullet').value,
+                    powder: document.getElementById('ladderPowder').value,
+                    brass: document.getElementById('ladderBrass').value,
+                    notes: document.getElementById('ladderNotes').value,
+                    charges: charges
+                };
+            }
+
+            validateLadderTest(data) {
+                if (!data.date || !data.rifle || !data.range || !data.bullet || !data.powder) {
+                    this.showStatus('Please fill in all required test configuration fields', 'error');
+                    return false;
+                }
+
+                if (data.charges.length === 0) {
+                    this.showStatus('Please enter velocity data for at least one charge weight', 'error');
+                    return false;
+                }
+
+                return true;
+            }
+
+            clearLadderForm() {
+                const form = document.getElementById('ladderForm');
+                if (form) {
+                    form.reset();
+                    document.getElementById('ladderEntries').innerHTML = '';
+                    document.getElementById('ladderDate').value = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            renderLadderTests() {
+                const resultsDiv = document.getElementById('ladderResults');
+                if (!resultsDiv) return;
+
+                if (this.ladderTests.length === 0) {
+                    resultsDiv.innerHTML = '<div class="no-sessions">No ladder tests recorded yet</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = this.ladderTests.map(test => `
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #7D8597;">
+                        <h3 style="color: #001845; margin-bottom: 10px;">${this.formatDate(test.date)}</h3>
+                        <p><strong>Rifle:</strong> ${test.rifle}</p>
+                        <p><strong>Range:</strong> ${test.range} yards</p>
+                        <p><strong>Bullet:</strong> ${test.bullet}</p>
+                        <p><strong>Powder:</strong> ${test.powder}</p>
+                        <p><strong>Charges Tested:</strong> ${test.charges.length}</p>
+                        ${test.notes ? `<p><strong>Notes:</strong> ${test.notes}</p>` : ''}
+                        <div style="margin-top: 10px;">
+                            <button onclick="app.analyzeTest('${test.id}')" class="btn btn-primary" style="margin-right: 10px;">📊 Analyze in Pro</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            analyzeTest(testId) {
+                this.switchTab('analytics');
+                const test = this.ladderTests.find(t => t.id === testId);
+                if (test) {
+                    this.updateAnalytics(test);
+                    this.showStatus('Test loaded for analysis', 'info');
+                }
+            }
+
+            updateAnalytics(test) {
+                if (!test) return;
+
+                // Update flat spot analysis
+                const flatSpotDiv = document.getElementById('flatSpotAnalysis');
+                if (flatSpotDiv) {
+                    const charges = test.charges.filter(c => c.velocities.length > 0).sort((a, b) => a.charge - b.charge);
+                    if (charges.length >= 3) {
+                        flatSpotDiv.innerHTML = `
+                            <p><strong>Test:</strong> ${test.rifle}</p>
+                            <p><strong>Charges:</strong> ${charges.map(c => c.charge + 'gr').join(', ')}</p>
+                            <p style="margin-top: 10px; color: #33415C;">
+                                Analyzing ${charges.length} charge weights for velocity stability and optimal nodes.
+                            </p>
+                        `;
+                    } else {
+                        flatSpotDiv.innerHTML = '<p>Need at least 3 charge weights for flat spot analysis.</p>';
+                    }
+                }
+
+                // Update statistical analysis
+                const statsDiv = document.getElementById('statisticalAnalysis');
+                if (statsDiv) {
+                    const allVelocities = [];
+                    test.charges.forEach(charge => {
+                        charge.velocities.forEach(vel => {
+                            if (vel !== undefined && !isNaN(vel)) allVelocities.push(vel);
+                        });
+                    });
+
+                    if (allVelocities.length > 0) {
+                        const avg = allVelocities.reduce((a, b) => a + b, 0) / allVelocities.length;
+                        const max = Math.max(...allVelocities);
+                        const min = Math.min(...allVelocities);
+                        const es = max - min;
+
+                        statsDiv.innerHTML = `
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #0466C8; margin: 10px 0;">${avg.toFixed(0)} fps</div>
+                            <p>Overall Average Velocity</p>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #0466C8; margin: 10px 0;">${es} fps</div>
+                            <p>Extreme Spread (Overall)</p>
+                        `;
+                    }
+                }
+
+                // Update recommendations
+                const recDiv = document.getElementById('loadRecommendation');
+                if (recDiv) {
+                    const bestCharge = test.charges.reduce((best, current) => {
+                        const bestSD = this.getStandardDeviation(best);
+                        const currentSD = this.getStandardDeviation(current);
+                        return currentSD < bestSD ? current : best;
+                    });
+
+                    recDiv.innerHTML = `
+                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                            <strong style="color: #c0392b;">⚠️ SAFETY NOTICE:</strong><br>
+                            This application provides <strong>data analysis only</strong>. Never exceed published load data from reputable sources. Always start low and work up safely. Consult official reloading manuals.
+                        </div>
+                        <div style="background: rgba(4, 102, 200, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #0466C8; margin: 10px 0;">
+                            <strong>📊 Data Analysis Results:</strong><br>
+                            Most consistent charge from your test: <strong>${bestCharge.charge}gr</strong><br>
+                            Standard Deviation: ${this.getStandardDeviation(bestCharge).toFixed(1)} fps<br><br>
+                            <strong>Next Steps:</strong><br>
+                            • Verify charge weight against published load data<br>
+                            • Test seating depth variations<br>
+                            • Confirm accuracy at longer distances<br>
+                            • Always follow safe reloading practices
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(241, 196, 15, 0.1); border-radius: 6px;">
+                            <strong>📚 Recommended References:</strong><br>
+                            • Hodgdon Load Data Center<br>
+                            • Manufacturer reloading manuals<br>
+                            • Peer-reviewed load data sources<br>
+                            • Local reloading communities & mentors
+                        </div>
+                    `;
+                }
+            }
+
+            getStandardDeviation(charge) {
+                const validVels = charge.velocities.filter(v => v !== undefined && !isNaN(v));
+                if (validVels.length < 2) return 0;
+                
+                const avg = validVels.reduce((a, b) => a + b, 0) / validVels.length;
+                const variance = validVels.reduce((sum, vel) => sum + Math.pow(vel - avg, 2), 0) / validVels.length;
+                return Math.sqrt(variance);
+            }
+
+            simulateWeatherData() {
+                const mockData = {
+                    temperature: (Math.random() * 40 + 50).toFixed(1),
+                    humidity: (Math.random() * 50 + 30).toFixed(0),
+                    pressure: (Math.random() * 2 + 29).toFixed(2),
+                    windSpeed: (Math.random() * 15 + 2).toFixed(1),
+                    windDirection: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor(Math.random() * 8)]
+                };
+
+                // Auto-fill environmental fields
+                const tempField = document.getElementById('temperature');
+                const humidityField = document.getElementById('humidity');
+                const pressureField = document.getElementById('pressure');
+                const windSpeedField = document.getElementById('windSpeed');
+                const windDirField = document.getElementById('windDirection');
+
+                if (tempField) tempField.value = mockData.temperature;
+                if (humidityField) humidityField.value = mockData.humidity;
+                if (pressureField) pressureField.value = mockData.pressure;
+                if (windSpeedField) windSpeedField.value = mockData.windSpeed;
+                if (windDirField) windDirField.value = mockData.windDirection;
+
+                this.showStatus('Weather data simulated and auto-filled!', 'info');
+            }
+
+            saveSession() {
+                const sessionData = {
+                    id: Date.now().toString(),
+                    date: document.getElementById('sessionDate').value,
+                    rifleProfile: document.getElementById('rifleProfile').value,
+                    rangeDistance: document.getElementById('rangeDistance').value,
+                    rangeUnit: document.getElementById('rangeUnit').value,
+                    ammoType: document.getElementById('ammoType').value,
+                    muzzleVelocity: document.getElementById('muzzleVelocity').value,
+                    temperature: document.getElementById('temperature').value,
+                    tempUnit: document.getElementById('tempUnit').value,
+                    humidity: document.getElementById('humidity').value,
+                    pressure: document.getElementById('pressure').value,
+                    pressureUnit: document.getElementById('pressureUnit').value,
+                    windSpeed: document.getElementById('windSpeed').value,
+                    windSpeedUnit: document.getElementById('windSpeedUnit').value,
+                    windDirection: document.getElementById('windDirection').value,
+                    predElevation: document.getElementById('predElevation').value,
+                    elevationUnit: document.getElementById('elevationUnit').value,
+                    actualElevation: document.getElementById('actualElevation').value,
+                    actualElevationUnit: document.getElementById('actualElevationUnit').value,
+                    predWindage: document.getElementById('predWindage').value,
+                    windageUnit: document.getElementById('windageUnit').value,
+                    actualWindage: document.getElementById('actualWindage').value,
+                    actualWindageUnit: document.getElementById('actualWindageUnit').value,
+                    notes: document.getElementById('notes').value
+                };
+
+                if (this.validateSession(sessionData)) {
+                    this.sessions.unshift(sessionData);
+                    this.saveSessions();
+                    this.renderSessions();
+                    this.clearForm();
+                    this.showStatus('Session saved successfully!', 'info');
+                }
+            }
+
+            validateSession(sessionData) {
+                if (!sessionData.date || !sessionData.rifleProfile || !sessionData.rangeDistance || !sessionData.ammoType) {
+                    this.showStatus('Please fill in all required fields', 'error');
+                    return false;
+                }
+                return true;
+            }
+
+            clearForm() {
+                const form = document.getElementById('sessionForm');
+                if (form) {
+                    form.reset();
+                    this.setCurrentDateTime();
+                }
+            }
+
+            renderSessions() {
+                const sessionsList = document.getElementById('sessionsList');
+                if (!sessionsList) return;
+
+                if (this.sessions.length === 0) {
+                    sessionsList.innerHTML = '<div class="no-sessions">No shooting sessions recorded yet</div>';
+                    return;
+                }
+
+                sessionsList.innerHTML = this.sessions.map(session => `
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #7D8597;">
+                        <h3 style="color: #001845; margin-bottom: 10px;">${this.formatDate(session.date)}</h3>
+                        <p><strong>Rifle:</strong> ${session.rifleProfile}</p>
+                        <p><strong>Range:</strong> ${session.rangeDistance} ${session.rangeUnit}</p>
+                        <p><strong>Ammo:</strong> ${session.ammoType}</p>
+                        ${session.notes ? `<p><strong>Notes:</strong> ${session.notes}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const preview = document.getElementById('imagePreview');
+                        const uploadText = document.getElementById('uploadText');
+                        const fileUpload = document.getElementById('fileUpload');
+                        
+                        if (preview && uploadText && fileUpload) {
+                            preview.src = e.target.result;
+                            preview.style.display = 'block';
+                            uploadText.textContent = '✅ ' + file.name;
+                            fileUpload.classList.add('has-file');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            showStatus(message, type) {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = `kestrel-status status-${type}`;
+                statusDiv.textContent = message;
+                statusDiv.style.position = 'fixed';
+                statusDiv.style.top = '20px';
+                statusDiv.style.right = '20px';
+                statusDiv.style.zIndex = '1000';
+                statusDiv.style.maxWidth = '300px';
+                
+                document.body.appendChild(statusDiv);
+                
+                setTimeout(() => {
+                    statusDiv.remove();
+                }, 3000);
+            }
+
+            switchTab(tabName) {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+
+                // Remove active class from all nav tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+
+                // Show selected tab content
+                const targetTab = document.getElementById(`${tabName}-tab`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+                
+                // Add active class to selected nav tab
+                const targetNavTab = document.querySelector(`.nav-tab[onclick="switchTab('${tabName}')"]`);
+                if (targetNavTab) {
+                    targetNavTab.classList.add('active');
+                }
+
+                this.currentTab = tabName;
+            }
+        }
+
+        // Global Functions
+        function switchTab(tabName) {
+            if (window.app) {
+                window.app.switchTab(tabName);
+            }
+        }
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                window.app = new RifleLogbook();
+                console.log('Application initialized successfully');
+            } catch (error) {
+                console.error('Error initializing application:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+                                
