@@ -1,97 +1,210 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Enhanced Precision Rifle Logbook
 
-# Getting Started
+A comprehensive React Native application for precision rifle enthusiasts to track shooting sessions, perform ladder tests, analyze performance data, and manage their shooting activities with integrated cloud storage and analytics.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **Session Logging**: Record detailed shooting sessions with targets, conditions, and equipment
+- **Ladder Testing**: Built-in ladder test functionality for load development
+- **Analytics Dashboard**: Performance metrics and trend analysis
+- **Cloud Integration**: Firebase and Supabase backend support
+- **Cross-Platform**: iOS and Android support
+- **Offline Capability**: Local storage with cloud sync
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Frontend**: React Native 0.80.1
+- **Navigation**: React Navigation v7
+- **Backend**: Firebase (Firestore, Auth, Storage) + Supabase
+- **Database**: SQLite (local) + Cloud databases
+- **Language**: TypeScript/JavaScript
+
+## Prerequisites
+
+- Node.js >= 18
+- React Native CLI
+- Xcode (for iOS development)
+- Android Studio (for Android development)
+- CocoaPods (for iOS dependencies)
+
+## Installation
+
+### 1. Clone and Install Dependencies
 
 ```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+git clone <your-repo-url>
+cd PrecisionRifleLogbook
+npm install
 ```
 
-## Step 2: Build and run your app
+### 2. iOS Setup
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+Install CocoaPods dependencies:
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+cd ios
 bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
 bundle exec pod install
+cd ..
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### 3. Firebase Configuration
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Download `GoogleService-Info.plist` for iOS
+3. Place `GoogleService-Info.plist` in `ios/PrecisionRifleLogbook/`
+4. Add the file to your Xcode project (drag and drop into the project navigator)
+
+### 4. Supabase Configuration
+
+1. Create a Supabase project at [Supabase Dashboard](https://supabase.com/dashboard)
+2. Copy your project URL and anon key
+3. Create a `.env` file in the root directory:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Getting Started
+
+### Start Metro Bundler
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+npm start
+# or
+npx react-native start
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Run on iOS
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```sh
+npm run ios
+# or
+npx react-native run-ios
+```
 
-## Step 3: Modify your app
+### Run on Android
 
-Now that you have successfully run the app, let's make changes!
+```sh
+npm run android
+# or
+npx react-native run-android
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Project Structure
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+```
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Shared components (Button, Card, etc.)
+├── database/           # Database schemas and migrations
+├── models/             # Data models (LadderTest, ShootingSession)
+├── screens/            # App screens
+│   ├── AnalyticsScreen.js
+│   ├── LadderTestScreen.js
+│   ├── LogbookScreen.js
+│   └── SettingsScreen.js
+└── services/           # Backend services
+    ├── DatabaseService.js
+    ├── LogbookService.js
+    └── MockDatabaseService.js
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Firebase Setup
 
-## Congratulations! :tada:
+The app is configured to use Firebase for:
+- **Authentication**: User login and registration
+- **Firestore**: Document-based data storage
+- **Storage**: File uploads (target images, etc.)
 
-You've successfully run and modified your React Native App. :partying_face:
+Firebase is automatically initialized in `ios/PrecisionRifleLogbook/AppDelegate.swift`:
 
-### Now what?
+```swift
+import FirebaseCore
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    // Configure Firebase
+    FirebaseApp.configure()
+    // ... rest of initialization
+}
+```
 
-# Troubleshooting
+## Supabase Setup
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+Supabase provides:
+- **PostgreSQL Database**: Relational data storage
+- **Real-time subscriptions**: Live data updates
+- **Row Level Security**: Data access control
 
-# Learn More
+## Troubleshooting
 
-To learn more about React Native, take a look at the following resources:
+### Common Issues
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+1. **"RNFBAppModule not found" Error**
+   - Ensure `GoogleService-Info.plist` is in the correct location
+   - Clean build: `cd ios && xcodebuild clean && cd ..`
+   - Reset Metro cache: `npx react-native start --reset-cache`
+
+2. **Pod Install Issues**
+   - Update CocoaPods: `sudo gem install cocoapods`
+   - Clean and reinstall: `cd ios && rm -rf Pods && bundle exec pod install`
+
+3. **Metro Cache Issues**
+   - Clear cache: `npx react-native start --reset-cache`
+   - Delete node_modules: `rm -rf node_modules && npm install`
+
+### iOS Build Issues
+
+If you encounter build issues on iOS:
+
+1. Clean the build folder in Xcode (Product → Clean Build Folder)
+2. Delete derived data: `rm -rf ~/Library/Developer/Xcode/DerivedData`
+3. Rebuild the project
+
+### Android Build Issues
+
+For Android issues:
+
+1. Clean the project: `cd android && ./gradlew clean && cd ..`
+2. Clear React Native cache: `npx react-native start --reset-cache`
+
+## Development
+
+### Adding New Features
+
+1. Create new screens in `src/screens/`
+2. Add navigation routes in `App.tsx`
+3. Update services as needed in `src/services/`
+4. Test on both iOS and Android
+
+### Database Schema
+
+The app uses a hybrid approach:
+- **Local**: SQLite for offline functionality
+- **Cloud**: Firebase Firestore and Supabase PostgreSQL for sync
+
+### Testing
+
+```sh
+npm test
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly on both platforms
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For issues and questions:
+- Check the troubleshooting section above
+- Review React Native documentation
+- Check Firebase and Supabase documentation for backend issues
