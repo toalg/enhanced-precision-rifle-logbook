@@ -3,22 +3,86 @@
  * Handles Firebase-specific operations for the app
  */
 
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
+// Lazy load Firebase modules to prevent native module errors
+let auth = null;
+let firestore = null;
+let storage = null;
+
+// Safe Firebase initialization
+const initializeFirebase = () => {
+  try {
+    if (!auth) {
+      auth = require('@react-native-firebase/auth').default;
+    }
+    if (!firestore) {
+      firestore = require('@react-native-firebase/firestore').default;
+    }
+    if (!storage) {
+      storage = require('@react-native-firebase/storage').default;
+    }
+    return true;
+  } catch (error) {
+    console.warn('Firebase modules not available:', error.message);
+    return false;
+  }
+};
+
 import { FIRESTORE_COLLECTIONS, STORAGE_PATHS } from '../config/firebase';
 
 class FirebaseService {
   constructor() {
-    this.auth = auth();
-    this.firestore = firestore();
-    this.storage = storage();
+    this.isInitialized = false;
     this.currentUser = null;
     this.listeners = new Map();
   }
 
+  // Initialize Firebase safely
+  async initialize() {
+    try {
+      this.isInitialized = initializeFirebase();
+      if (this.isInitialized) {
+        this.auth = auth();
+        this.firestore = firestore();
+        this.storage = storage();
+        console.log('Firebase service initialized successfully');
+      } else {
+        console.warn('Firebase not available - running in offline mode');
+      }
+      return { success: true, initialized: this.isInitialized };
+    } catch (error) {
+      console.error('Firebase initialization failed:', error);
+      return { success: false, error: error.message, initialized: false };
+    }
+  }
+
+  // Check if Firebase is available
+  isFirebaseAvailable() {
+    return this.isInitialized && this.auth && this.firestore && this.storage;
+  }
+
+  // Test Firebase connectivity
+  async testConnection() {
+    if (!this.isFirebaseAvailable()) {
+      return { success: false, error: 'Firebase not available' };
+    }
+    
+    try {
+      // Simple test - just check if we can access Firebase
+      const testDoc = this.firestore.collection('test').doc('connection-test');
+      await testDoc.get();
+      return { success: true, message: 'Firebase connection successful' };
+    } catch (error) {
+      console.error('Firebase connection test failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Authentication Methods
   async signInWithEmail(email, password) {
+    if (!this.isFirebaseAvailable()) {
+      return { success: false, error: 'Firebase not available' };
+    }
+    
     try {
       const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
       this.currentUser = userCredential.user;
@@ -241,23 +305,6 @@ class FirebaseService {
           console.error('Error in Firebase event listener:', error);
         }
       });
-    }
-  }
-
-  // Initialize Firebase service
-  async initialize() {
-    try {
-      // Listen for auth state changes
-      this.auth.onAuthStateChanged((user) => {
-        this.currentUser = user;
-        this.emit('authStateChanged', { user });
-      });
-
-      console.log('Firebase service initialized');
-      return { success: true };
-    } catch (error) {
-      console.error('Error initializing Firebase service:', error);
-      return { success: false, error: error.message };
     }
   }
 }
