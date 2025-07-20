@@ -15,6 +15,10 @@ class SupabaseService {
   // Authentication Methods (using Supabase Auth)
   async signInWithEmail(email, password) {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -33,6 +37,10 @@ class SupabaseService {
 
   async signUpWithEmail(email, password) {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password
@@ -61,6 +69,10 @@ class SupabaseService {
 
   async signOut() {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
@@ -363,13 +375,30 @@ class SupabaseService {
   // Initialize Supabase service
   async initialize() {
     try {
+      // Check if Supabase client is available
+      if (typeof supabase === 'undefined' || !supabase) {
+        console.error('Supabase client is not initialized');
+        return { success: false, error: 'Supabase client not available' };
+      }
+
+      // Test the connection
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error && error.message !== 'No session') {
+          console.warn('Supabase auth session warning:', error.message);
+        }
+      } catch (connectionError) {
+        console.warn('Supabase connection test warning:', connectionError.message);
+      }
+
       // Listen for auth state changes
-      supabase.auth.onAuthStateChange((event, session) => {
+      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
         this.currentUser = session?.user || null;
         this.emit('authStateChanged', { user: this.currentUser });
+        console.log('Auth state changed:', event, this.currentUser ? 'User logged in' : 'User logged out');
       });
 
-      console.log('Supabase service initialized');
+      console.log('Supabase service initialized successfully');
       return { success: true };
     } catch (error) {
       console.error('Error initializing Supabase service:', error);

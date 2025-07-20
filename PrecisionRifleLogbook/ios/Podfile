@@ -17,9 +17,6 @@ end
 target 'PrecisionRifleLogbook' do
   config = use_native_modules!
 
-  # Enable modular headers globally for Firebase compatibility
-  use_modular_headers!
-
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.

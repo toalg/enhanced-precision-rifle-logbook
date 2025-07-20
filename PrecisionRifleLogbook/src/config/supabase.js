@@ -10,8 +10,23 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://gbosucljjdpeslmwfjsb.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdib3N1Y2xqamRwZXNsbXdmanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MzkxMTUsImV4cCI6MjA2ODExNTExNX0.rKJF2SqMjuvNezXsXpAwSrunT4Ne0IYr6TsmJ1NwHzo';
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with React Native specific options
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  },
+  realtime: {
+    transport: 'websocket',
+    timeout: 20000
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'supabase-js-react-native'
+    }
+  }
+});
 
 // Supabase table names
 export const SUPABASE_TABLES = {

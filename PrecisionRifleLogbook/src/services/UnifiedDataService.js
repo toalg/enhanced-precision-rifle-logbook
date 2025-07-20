@@ -26,21 +26,37 @@ class UnifiedDataService {
     return this.currentBackend;
   }
 
-  // Authentication (using Firebase by default for better cross-platform support)
+  // Authentication (using available service)
   async signInWithEmail(email, password) {
-    return await this.firebaseService.signInWithEmail(email, password);
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return await this.firebaseService.signInWithEmail(email, password);
+    } else {
+      return await this.supabaseService.signInWithEmail(email, password);
+    }
   }
 
   async signUpWithEmail(email, password) {
-    return await this.firebaseService.signUpWithEmail(email, password);
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return await this.firebaseService.signUpWithEmail(email, password);
+    } else {
+      return await this.supabaseService.signUpWithEmail(email, password);
+    }
   }
 
   async signOut() {
-    return await this.firebaseService.signOut();
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return await this.firebaseService.signOut();
+    } else {
+      return await this.supabaseService.signOut();
+    }
   }
 
   getCurrentUser() {
-    return this.firebaseService.getCurrentUser();
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return this.firebaseService.getCurrentUser();
+    } else {
+      return this.supabaseService.getCurrentUser();
+    }
   }
 
   // Data Operations (using current backend)
@@ -85,13 +101,21 @@ class UnifiedDataService {
     return await this.supabaseService.getDailyNote(date);
   }
 
-  // File Storage (Firebase Storage by default for better mobile support)
+  // File Storage (use available service)
   async uploadTargetPhoto(uri, sessionId) {
-    return await this.firebaseService.uploadTargetPhoto(uri, sessionId);
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return await this.firebaseService.uploadTargetPhoto(uri, sessionId);
+    } else {
+      return await this.supabaseService.uploadTargetPhoto(uri, sessionId);
+    }
   }
 
   async uploadExportFile(fileUri, filename) {
-    return await this.firebaseService.uploadExportFile(fileUri, filename);
+    if (this.firebaseService.isFirebaseAvailable()) {
+      return await this.firebaseService.uploadExportFile(fileUri, filename);
+    } else {
+      return await this.supabaseService.uploadExportFile(fileUri, filename);
+    }
   }
 
   // Dual Sync (save to both backends for redundancy)
@@ -205,16 +229,25 @@ class UnifiedDataService {
       const firebaseResult = await this.firebaseService.initialize();
       const supabaseResult = await this.supabaseService.initialize();
 
-      if (firebaseResult.success && supabaseResult.success) {
-        console.log('Unified Data Service initialized successfully');
+      // Check if at least one service initialized successfully
+      const firebaseOk = firebaseResult.success;
+      const supabaseOk = supabaseResult.success;
+
+      if (supabaseOk) {
+        console.log('Unified Data Service initialized successfully (Supabase primary)');
         
         // Set up event forwarding
         this.setupEventForwarding();
         
-        return { success: true };
+        return { success: true, backend: 'supabase', firebaseAvailable: firebaseOk };
+      } else if (firebaseOk) {
+        console.log('Unified Data Service initialized successfully (Firebase only)');
+        this.setBackend('firebase');
+        this.setupEventForwarding();
+        return { success: true, backend: 'firebase', supabaseAvailable: false };
       } else {
-        console.error('Service initialization failed:', { firebaseResult, supabaseResult });
-        return { success: false, firebaseResult, supabaseResult };
+        console.error('Service initialization failed - no backends available:', { firebaseResult, supabaseResult });
+        return { success: false, error: 'No backends available', firebaseResult, supabaseResult };
       }
     } catch (error) {
       console.error('Error initializing Unified Data Service:', error);

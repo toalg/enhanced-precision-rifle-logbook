@@ -7,7 +7,12 @@ export class ShootingSession {
   constructor(data = {}) {
     this.id = data.id || Date.now().toString();
     this.date = data.date || new Date().toISOString();
-    this.rifleProfile = data.rifleProfile || '';
+    
+    // Gun Profile Integration
+    this.profileId = data.profileId || null; // Link to GunProfile
+    this.rifleProfile = data.rifleProfile || ''; // Legacy field for backward compatibility
+    this.rounds = data.rounds || 0; // Number of rounds fired in this session
+    
     this.rangeDistance = data.rangeDistance || 0;
     this.rangeUnit = data.rangeUnit || 'yards';
     this.ammoType = data.ammoType || '';
@@ -49,8 +54,13 @@ export class ShootingSession {
       errors.push('Date is required');
     }
 
-    if (!this.rifleProfile || this.rifleProfile.trim().length === 0) {
-      errors.push('Rifle profile is required');
+    // Either profileId (new) or rifleProfile (legacy) must be present
+    if (!this.profileId && (!this.rifleProfile || this.rifleProfile.trim().length === 0)) {
+      errors.push('Gun profile is required');
+    }
+
+    if (this.rounds < 0) {
+      errors.push('Number of rounds cannot be negative');
     }
 
     if (!this.rangeDistance || this.rangeDistance <= 0) {
@@ -80,12 +90,27 @@ export class ShootingSession {
     };
   }
 
+  // Gun Profile Integration Methods
+  hasGunProfile() {
+    return this.profileId !== null;
+  }
+
+  isLegacySession() {
+    return !this.profileId && this.rifleProfile;
+  }
+
+  getProfileReference() {
+    return this.profileId || this.rifleProfile;
+  }
+
   // Data conversion methods
   toJSON() {
     return {
       id: this.id,
       date: this.date,
+      profileId: this.profileId,
       rifleProfile: this.rifleProfile,
+      rounds: this.rounds,
       rangeDistance: this.rangeDistance,
       rangeUnit: this.rangeUnit,
       ammoType: this.ammoType,

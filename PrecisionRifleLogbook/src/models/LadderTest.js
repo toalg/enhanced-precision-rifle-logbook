@@ -88,7 +88,12 @@ export class LadderTest {
   constructor(data = {}) {
     this.id = data.id || Date.now().toString();
     this.date = data.date || new Date().toISOString().split('T')[0];
-    this.rifle = data.rifle || '';
+    
+    // Gun Profile Integration  
+    this.profileId = data.profileId || null; // Link to GunProfile
+    this.rifle = data.rifle || ''; // Legacy field for backward compatibility
+    this.totalRounds = data.totalRounds || 0; // Total rounds fired in this test
+    
     this.rangeDistance = data.rangeDistance || 0;
     this.bullet = data.bullet || '';
     this.powder = data.powder || '';
@@ -110,8 +115,9 @@ export class LadderTest {
       errors.push('Test date is required');
     }
 
-    if (!this.rifle || this.rifle.trim().length === 0) {
-      errors.push('Rifle configuration is required');
+    // Either profileId (new) or rifle (legacy) must be present
+    if (!this.profileId && (!this.rifle || this.rifle.trim().length === 0)) {
+      errors.push('Gun profile is required');
     }
 
     if (!this.rangeDistance || this.rangeDistance <= 0) {
