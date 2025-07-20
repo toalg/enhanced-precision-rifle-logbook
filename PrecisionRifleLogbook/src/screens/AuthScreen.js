@@ -9,60 +9,57 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { AppStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
+import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
 
 const AuthScreen = () => {
+  const { signIn, signUp } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { signIn, signUp } = useAuth();
 
   const validateForm = () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter an email address');
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all required fields');
       return false;
     }
-    
-    if (!email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
+
+    if (isSignUp) {
+      if (!displayName.trim()) {
+        Alert.alert('Error', 'Please enter your display name');
+        return false;
+      }
+
+      if (password !== confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return false;
+      }
+
+      if (password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters long');
+        return false;
+      }
     }
-    
-    if (!password) {
-      Alert.alert('Error', 'Please enter a password');
-      return false;
-    }
-    
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
-      return false;
-    }
-    
-    if (isSignUp && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-    
+
     return true;
   };
 
   const handleSignIn = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
     try {
-      await signIn(email.trim(), password);
+      await signIn(email, password);
     } catch (error) {
       Alert.alert('Sign In Failed', error.message);
     } finally {
@@ -72,11 +69,16 @@ const AuthScreen = () => {
 
   const handleSignUp = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
     try {
-      await signUp(email.trim(), password, displayName.trim() || null);
-      Alert.alert('Success', 'Account created successfully!');
+      await signUp(email, password, displayName);
+      Alert.alert('Success', 'Account created successfully! Please sign in.');
+      setIsSignUp(false);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setDisplayName('');
     } catch (error) {
       Alert.alert('Sign Up Failed', error.message);
     } finally {
@@ -94,43 +96,52 @@ const AuthScreen = () => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
-          <Text style={styles.title}>Precision Rifle Logbook</Text>
+          <Text style={styles.title}>
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </Text>
           <Text style={styles.subtitle}>
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {isSignUp 
+              ? 'Sign up to start tracking your shooting sessions' 
+              : 'Sign in to access your data'
+            }
           </Text>
         </View>
 
         <View style={styles.form}>
           {isSignUp && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Display Name (Optional)</Text>
+              <Text style={styles.label}>Display Name</Text>
               <TextInput
                 style={styles.input}
                 value={displayName}
                 onChangeText={setDisplayName}
                 placeholder="Enter your name"
+                placeholderTextColor={Colors.grayDark}
                 autoCapitalize="words"
-                returnKeyType="next"
+                autoCorrect={false}
               />
             </View>
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
+              placeholderTextColor={Colors.grayDark}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              returnKeyType="next"
             />
           </View>
 
@@ -141,9 +152,10 @@ const AuthScreen = () => {
               value={password}
               onChangeText={setPassword}
               placeholder="Enter your password"
+              placeholderTextColor={Colors.grayDark}
               secureTextEntry
-              returnKeyType={isSignUp ? 'next' : 'done'}
-              onSubmitEditing={isSignUp ? undefined : handleSubmit}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
@@ -155,14 +167,15 @@ const AuthScreen = () => {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm your password"
+                placeholderTextColor={Colors.grayDark}
                 secureTextEntry
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
           )}
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             disabled={loading}
@@ -199,7 +212,7 @@ const AuthScreen = () => {
   );
 };
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -207,70 +220,69 @@ const styles = {
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: Spacing.large,
+    padding: Spacing.lg,
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.xxlarge,
+    marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: Typography.sizes.xlarge,
-    fontWeight: Typography.weights.bold,
+    fontSize: 28,
+    fontWeight: '700',
     color: Colors.primary,
     textAlign: 'center',
-    marginBottom: Spacing.small,
+    marginBottom: Spacing.sm,
   },
   subtitle: {
-    fontSize: Typography.sizes.medium,
-    color: Colors.textSecondary,
+    ...Typography.body,
+    color: Colors.grayDark,
     textAlign: 'center',
   },
   form: {
     width: '100%',
   },
   inputGroup: {
-    marginBottom: Spacing.large,
+    marginBottom: Spacing.lg,
   },
   label: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.medium,
-    color: Colors.text,
-    marginBottom: Spacing.small,
+    ...Typography.label,
+    color: Colors.white,
+    marginBottom: Spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.medium,
-    padding: Spacing.medium,
-    fontSize: Typography.sizes.medium,
+    borderColor: Colors.gray,
+    borderRadius: 8,
+    padding: Spacing.md,
+    fontSize: 16,
     backgroundColor: Colors.white,
-    color: Colors.text,
+    color: Colors.black,
   },
   submitButton: {
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.medium,
-    padding: Spacing.large,
+    borderRadius: 8,
+    padding: Spacing.lg,
     alignItems: 'center',
-    marginTop: Spacing.medium,
-    marginBottom: Spacing.large,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   submitButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
+    backgroundColor: Colors.grayDark,
   },
   submitButtonText: {
     color: Colors.white,
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
+    fontSize: 16,
+    fontWeight: '600',
   },
   switchButton: {
     alignItems: 'center',
-    padding: Spacing.medium,
+    padding: Spacing.md,
   },
   switchButtonText: {
     color: Colors.primary,
-    fontSize: Typography.sizes.medium,
+    fontSize: 16,
     textDecorationLine: 'underline',
   },
-};
+});
 
 export default AuthScreen;
