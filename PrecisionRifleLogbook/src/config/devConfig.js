@@ -8,12 +8,14 @@ export const DevConfig = {
   // Authentication Settings
   auth: {
     // Auto-login with test user on app start
+    // Set to false if you want to test manual login
     autoLogin: true,
     
     // Which test user to auto-login with
     defaultTestUser: 'developer', // 'developer', 'shooter', 'premium'
     
     // Skip authentication entirely (useful for UI testing)
+    // Set to true to bypass all authentication
     bypassAuth: false,
     
     // Mock user data when bypassing auth

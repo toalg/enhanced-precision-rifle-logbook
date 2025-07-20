@@ -47,7 +47,11 @@ class SupabaseAuthService {
       // Development mode: Auto-login with test user if no session
       if (this.isDevelopment && DEV_CONFIG.autoLogin && !this.currentUser) {
         console.log('🔧 Development mode: Auto-login with test user');
-        await this.autoLoginWithTestUser();
+        const autoLoginSuccess = await this.autoLoginWithTestUser();
+        if (!autoLoginSuccess) {
+          console.log('🔧 Auto-login failed, continuing without authentication');
+          // Continue without auto-login - user can manually sign in later
+        }
       }
       
       // Set up auth state listener
@@ -75,8 +79,29 @@ class SupabaseAuthService {
       }
       
       console.log(`🔧 Auto-login with test user: ${testUser.email}`);
-      const result = await this.signInWithEmail(testUser.email, testUser.password);
-      return result.success;
+      
+      // First try to sign in (user might already exist)
+      let result = await this.signInWithEmail(testUser.email, testUser.password);
+      
+      // If sign in fails, try to create the user
+      if (!result.success && result.error?.includes('Invalid login credentials')) {
+        console.log(`🔧 Test user doesn't exist, creating: ${testUser.email}`);
+        result = await this.signUpWithEmail(testUser.email, testUser.password, testUser.displayName);
+        
+        if (result.success) {
+          console.log(`🔧 Test user created successfully: ${testUser.email}`);
+          // Now try to sign in with the newly created user
+          result = await this.signInWithEmail(testUser.email, testUser.password);
+        }
+      }
+      
+      if (result.success) {
+        console.log(`🔧 Auto-login successful: ${testUser.email}`);
+        return true;
+      } else {
+        console.warn(`🔧 Auto-login failed: ${result.error}`);
+        return false;
+      }
     } catch (error) {
       console.error('Auto-login failed:', error);
       return false;
