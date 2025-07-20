@@ -13,7 +13,8 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  Modal
+  Modal,
+  TextInput
 } from 'react-native';
 import GunProfileService from '../services/GunProfileService';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,15 @@ const GunProfilesScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showCleaningModal, setShowCleaningModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newProfile, setNewProfile] = useState({
+    name: '',
+    caliber: '',
+    manufacturer: '',
+    model: '',
+    cleaning_interval: 200,
+    notes: ''
+  });
 
   // Load profiles on component mount
   useEffect(() => {
@@ -123,6 +133,39 @@ const GunProfilesScreen = () => {
     );
   };
 
+  const handleAddProfile = () => {
+    setShowAddModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!newProfile.name.trim() || !newProfile.caliber.trim()) {
+      Alert.alert('Error', 'Name and caliber are required');
+      return;
+    }
+
+    try {
+      const result = await GunProfileService.createRifleProfile(newProfile);
+      if (result.success) {
+        Alert.alert('Success', `${newProfile.name} added successfully`);
+        setShowAddModal(false);
+        setNewProfile({
+          name: '',
+          caliber: '',
+          manufacturer: '',
+          model: '',
+          cleaning_interval: 200,
+          notes: ''
+        });
+        loadProfiles();
+      } else {
+        Alert.alert('Error', result.error);
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      Alert.alert('Error', 'Failed to create profile');
+    }
+  };
+
   const renderProfileCard = (profile) => {
     const roundsSinceCleaning = profile.roundsSinceCleaning || 0;
     const needsCleaning = profile.needsCleaning || false;
@@ -201,9 +244,9 @@ const GunProfilesScreen = () => {
       <Text style={styles.emptyStateText}>
         Add your first rifle profile to start tracking rounds and cleaning schedules.
       </Text>
-      <TouchableOpacity style={styles.addButton} onPress={() => Alert.alert('Coming Soon', 'Add profile functionality will be implemented soon!')}>
-        <Text style={styles.addButtonText}>Add Rifle Profile</Text>
-      </TouchableOpacity>
+             <TouchableOpacity style={styles.addButton} onPress={() => handleAddProfile()}>
+         <Text style={styles.addButtonText}>Add Rifle Profile</Text>
+       </TouchableOpacity>
     </View>
   );
 
@@ -246,10 +289,91 @@ const GunProfilesScreen = () => {
             {profiles.length} rifle{profiles.length !== 1 ? 's' : ''} • 
             {profiles.filter(p => p.needsCleaning).length} need cleaning
           </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+                 </View>
+       </ScrollView>
+
+       {/* Add Profile Modal */}
+       <Modal
+         visible={showAddModal}
+         animationType="slide"
+         transparent={true}
+         onRequestClose={() => setShowAddModal(false)}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalContent}>
+             <Text style={styles.modalTitle}>Add Rifle Profile</Text>
+             
+             <TextInput
+               style={styles.modalInput}
+               placeholder="Rifle Name (e.g., Remington 700)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.name}
+               onChangeText={(text) => setNewProfile({...newProfile, name: text})}
+             />
+             
+             <TextInput
+               style={styles.modalInput}
+               placeholder="Caliber (e.g., .308 Winchester)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.caliber}
+               onChangeText={(text) => setNewProfile({...newProfile, caliber: text})}
+             />
+             
+             <TextInput
+               style={styles.modalInput}
+               placeholder="Manufacturer (e.g., Remington)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.manufacturer}
+               onChangeText={(text) => setNewProfile({...newProfile, manufacturer: text})}
+             />
+             
+             <TextInput
+               style={styles.modalInput}
+               placeholder="Model (e.g., 700 SPS)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.model}
+               onChangeText={(text) => setNewProfile({...newProfile, model: text})}
+             />
+             
+             <TextInput
+               style={styles.modalInput}
+               placeholder="Cleaning Interval (default: 200 rounds)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.cleaning_interval.toString()}
+               onChangeText={(text) => setNewProfile({...newProfile, cleaning_interval: parseInt(text) || 200})}
+               keyboardType="numeric"
+             />
+             
+             <TextInput
+               style={[styles.modalInput, styles.modalTextArea]}
+               placeholder="Notes (optional)"
+               placeholderTextColor="#7D8597"
+               value={newProfile.notes}
+               onChangeText={(text) => setNewProfile({...newProfile, notes: text})}
+               multiline
+               numberOfLines={3}
+             />
+             
+             <View style={styles.modalButtons}>
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.modalButtonCancel]}
+                 onPress={() => setShowAddModal(false)}
+               >
+                 <Text style={styles.modalButtonCancelText}>Cancel</Text>
+               </TouchableOpacity>
+               
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.modalButtonSave]}
+                 onPress={handleSaveProfile}
+               >
+                 <Text style={styles.modalButtonSaveText}>Save Profile</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+         </View>
+       </Modal>
+     </SafeAreaView>
+   );
 };
 
 const styles = StyleSheet.create({
@@ -432,6 +556,80 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: '#7D8597',
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 18, 51, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#33415C',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    backgroundColor: '#001233',
+    borderWidth: 1,
+    borderColor: '#4A5568',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  modalTextArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#7D8597',
+  },
+  modalButtonCancelText: {
+    color: '#7D8597',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonSave: {
+    backgroundColor: '#0466C8',
+  },
+  modalButtonSaveText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
