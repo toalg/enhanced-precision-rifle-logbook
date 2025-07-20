@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CommonStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
 import CleaningProgressBar from '../components/profiles/CleaningProgressBar';
 import { useProfiles } from '../context/ProfileContext';
 import { GunProfileService } from '../services/GunProfileService';

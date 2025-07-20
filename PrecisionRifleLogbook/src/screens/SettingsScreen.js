@@ -20,6 +20,8 @@ import Card from '../components/common/Card';
 import GunProfilesScreen from './GunProfilesScreen';
 
 import LogbookService from '../services/LogbookService';
+import { useProfiles } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
 
 const SettingsScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,12 @@ const SettingsScreen = () => {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [activeSection, setActiveSection] = useState('main'); // 'main' or 'profiles'
+
+  // Get profile context
+  const { profiles, selectedProfile } = useProfiles();
+  
+  // Get auth context
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     loadSettings();
@@ -190,22 +198,47 @@ const SettingsScreen = () => {
   };
 
   // Unified Card Components
-  const renderGunProfilesCard = () => (
-    <Card variant="dark">
-      <Text style={styles.sectionTitle}>🔧 Gun Profiles</Text>
-      <Text style={styles.sectionDescription}>
-        Manage your rifle profiles and track cleaning schedules
-      </Text>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Manage Gun Profiles"
-          onPress={() => setActiveSection('profiles')}
-          variant="primary"
-          size="medium"
-        />
-      </View>
-    </Card>
-  );
+  const renderGunProfilesCard = () => {
+    const profilesNeedingCleaning = profiles.filter(profile => {
+      const roundsSinceCleaning = profile.total_rounds - profile.last_cleaned_at;
+      return roundsSinceCleaning >= (profile.cleaning_interval || 200);
+    }).length;
+
+    return (
+      <Card variant="dark">
+        <Text style={styles.sectionTitle}>🔧 Gun Profiles</Text>
+        <Text style={styles.sectionDescription}>
+          Manage your rifle profiles and track cleaning schedules
+        </Text>
+        
+        <View style={styles.profileStats}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{profiles.length}</Text>
+            <Text style={styles.statLabel}>Total Profiles</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{selectedProfile ? '1' : '0'}</Text>
+            <Text style={styles.statLabel}>Selected</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, profilesNeedingCleaning > 0 && styles.warningText]}>
+              {profilesNeedingCleaning}
+            </Text>
+            <Text style={styles.statLabel}>Need Cleaning</Text>
+          </View>
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Manage Gun Profiles"
+            onPress={() => setActiveSection('profiles')}
+            variant="primary"
+            size="medium"
+          />
+        </View>
+      </Card>
+    );
+  };
 
   const renderPremiumStatusCard = () => (
     <Card variant={isPremium ? "success" : "dark"}>
@@ -339,6 +372,31 @@ const SettingsScreen = () => {
     </Card>
   );
 
+  const renderAccountCard = () => (
+    <Card variant="primary">
+      <Text style={styles.sectionTitle}>👤 Account</Text>
+      
+      <View style={styles.aboutInfo}>
+        <Text style={styles.infoItem}>Email: {user?.email || 'Unknown'}</Text>
+        <Text style={styles.infoItem}>User ID: {user?.uid?.substring(0, 8) + '...' || 'N/A'}</Text>
+        {user?.displayName && <Text style={styles.infoItem}>Name: {user.displayName}</Text>}
+      </View>
+      
+      <Text style={styles.sectionDescription}>
+        Manage your account settings and authentication.
+      </Text>
+      
+      <View style={styles.buttonRow}>
+        <Button
+          title="Sign Out"
+          onPress={handleSignOut}
+          variant="danger"
+          style={styles.halfWidthButton}
+        />
+      </View>
+    </Card>
+  );
+
   const renderAboutCard = () => (
     <Card variant="info">
       <Text style={styles.sectionTitle}>ℹ️ About Precision Rifle Logbook</Text>
@@ -365,8 +423,35 @@ const SettingsScreen = () => {
     </Card>
   );
 
+  const handleSignOut = async () => {
+    try {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Sign Out', 
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await signOut();
+                Alert.alert('Success', 'Signed out successfully');
+              } catch (error) {
+                Alert.alert('Error', 'Failed to sign out: ' + error.message);
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign out: ' + error.message);
+    }
+  };
+
   const renderMainSettings = () => (
     <>
+      {renderAccountCard()}
       {renderGunProfilesCard()}
       {renderPremiumStatusCard()}
       {renderCloudSyncCard()}
@@ -395,11 +480,13 @@ const SettingsScreen = () => {
           <>
             <View style={styles.navigationHeader}>
               <Button
-                title="Back to Settings"
+                title="← Back"
                 onPress={() => setActiveSection('main')}
                 variant="secondary"
                 size="small"
               />
+              <Text style={styles.navigationTitle}>Gun Profiles</Text>
+              <View style={{ width: 60 }} />
             </View>
             <GunProfilesScreen />
           </>
@@ -420,12 +507,22 @@ const styles = StyleSheet.create({
   // Navigation
   navigationHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.primaryDarkest,
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
+    marginBottom: Spacing.md,
+  },
+
+  navigationTitle: {
+    ...Typography.h3,
+    color: Colors.white,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: Spacing.md,
   },
 
   // Content Layout
@@ -479,6 +576,39 @@ const styles = StyleSheet.create({
     color: Colors.white,
     lineHeight: 22,
     marginBottom: Spacing.md,
+  },
+
+  // Profile Stats
+  profileStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: Spacing.md,
+    marginVertical: Spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Colors.grayDeep,
+  },
+
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  statNumber: {
+    ...Typography.h2,
+    color: Colors.white,
+    fontWeight: '700',
+    marginBottom: Spacing.xs,
+  },
+
+  statLabel: {
+    ...Typography.caption,
+    color: Colors.grayDark,
+    textAlign: 'center',
+  },
+
+  warningText: {
+    color: Colors.warning,
   },
 
   // Storage Stats

@@ -179,14 +179,13 @@ const LogbookScreen = () => {
 
   const renderForm = () => (
     <Card variant="info" style={styles.formCard}>
-      <Text style={styles.formTitle}>📝 New Shooting Session</Text>
+      <Text style={styles.formTitle}>New Shooting Session</Text>
       
       {/* Weather Meter Section */}
       <Card variant="dark" style={styles.weatherSection}>
-        <Text style={styles.weatherTitle}>📡 Weather Meter Data</Text>
+        <Text style={styles.weatherTitle}>Weather Meter Data</Text>
         <Button
           title="Simulate Weather Data"
-          icon="🌡️"
           onPress={simulateWeatherData}
           variant="primary"
           style={styles.weatherButton}
@@ -253,7 +252,7 @@ const LogbookScreen = () => {
       />
 
       {/* Environmental Conditions */}
-      <Text style={styles.sectionTitle}>🌡️ Environmental Conditions</Text>
+      <Text style={styles.sectionTitle}>Environmental Conditions</Text>
       
       <View style={styles.row}>
         <View style={styles.flex1}>
@@ -313,7 +312,7 @@ const LogbookScreen = () => {
       />
 
       {/* Ballistic Data */}
-      <Text style={styles.sectionTitle}>🎯 Predicted vs Actual</Text>
+      <Text style={styles.sectionTitle}>Predicted vs Actual</Text>
       
       <View style={styles.row}>
         <View style={styles.flex1}>
@@ -350,7 +349,7 @@ const LogbookScreen = () => {
       {/* Form Actions */}
       <View style={styles.formActions}>
         <Button
-          title="💾 Save Session"
+          title="Save Session"
           onPress={validateAndSave}
           loading={saving}
           variant="primary"
@@ -358,7 +357,7 @@ const LogbookScreen = () => {
         />
         
         <Button
-          title="🗑️ Clear Form"
+          title="Clear Form"
           onPress={() => {
             resetForm();
             Alert.alert('Form Cleared', 'Form has been reset');
@@ -390,7 +389,7 @@ const LogbookScreen = () => {
         {/* Header Actions */}
         <View style={styles.header}>
           <Button
-            title={showForm ? "📋 View Sessions" : "📝 New Session"}
+            title={showForm ? "View Sessions" : "New Session"}
             onPress={async () => {
               if (!showForm) {
                 // Starting new session - require profile selection
@@ -442,7 +441,7 @@ const LogbookScreen = () => {
               <View style={CommonStyles.emptyState}>
                 <Text style={[styles.emptyText, CommonStyles.emptyStateText]}>
                   No shooting sessions recorded yet.{'\n'}
-                  Tap "New Session" to get started!
+                  Tap 'New Session' to get started!
                 </Text>
               </View>
             ) : (

@@ -320,7 +320,7 @@ const LadderTestScreen = () => {
       )}
       
       <Button
-        title="📊 Analyze Test"
+        title="Analyze Test"
         onPress={() => analyzeTest(test.id)}
         variant="primary"
         style={styles.analyzeButton}
@@ -331,7 +331,7 @@ const LadderTestScreen = () => {
   const renderForm = () => (
     <ScrollView>
       <Card variant="info" style={styles.formCard}>
-        <Text style={styles.formTitle}>🎯 Ladder Test Setup</Text>
+        <Text style={styles.formTitle}>Ladder Test Setup</Text>
         
         {/* Test Configuration */}
         <Text style={styles.sectionTitle}>Test Configuration</Text>
@@ -388,7 +388,7 @@ const LadderTestScreen = () => {
 
         {/* Ladder Generation */}
         <Card variant="warning" style={styles.ladderGenCard}>
-          <Text style={styles.sectionTitle}>⚖️ Ladder Data Entry</Text>
+          <Text style={styles.sectionTitle}>Ladder Data Entry</Text>
           
           <View style={styles.generatorRow}>
             <View style={styles.generatorInput}>
@@ -426,7 +426,6 @@ const LadderTestScreen = () => {
             title="Generate Ladder"
             onPress={generateLadderCharges}
             variant="secondary"
-            icon="⚖️"
           />
         </Card>
         
@@ -450,7 +449,7 @@ const LadderTestScreen = () => {
         {/* Form Actions */}
         <View style={styles.formActions}>
           <Button
-            title="💾 Save Ladder Test"
+            title="Save Ladder Test"
             onPress={validateAndSave}
             loading={saving}
             variant="primary"
@@ -458,7 +457,7 @@ const LadderTestScreen = () => {
           />
           
           <Button
-            title="🗑️ Clear Form"
+            title="Clear Form"
             onPress={() => {
               resetForm();
               Alert.alert('Form Cleared', 'Ladder test form has been reset');
@@ -491,7 +490,7 @@ const LadderTestScreen = () => {
         {/* Header Actions */}
         <View style={styles.header}>
           <Button
-            title={showForm ? "📋 View Tests" : "🎯 New Ladder Test"}
+            title={showForm ? "View Tests" : "New Ladder Test"}
             onPress={async () => {
               if (!showForm) {
                 // Starting new ladder test - require profile selection
@@ -543,7 +542,7 @@ const LadderTestScreen = () => {
               <View style={CommonStyles.emptyState}>
                 <Text style={[styles.emptyText, CommonStyles.emptyStateText]}>
                   No ladder tests recorded yet.{'\n'}
-                  Tap "New Ladder Test" to get started!
+                  Tap 'New Ladder Test' to get started!
                 </Text>
               </View>
             ) : (

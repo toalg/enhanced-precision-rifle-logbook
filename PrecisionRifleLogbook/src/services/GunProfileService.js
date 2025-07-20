@@ -5,6 +5,32 @@
 
 import { supabase } from '../config/supabase';
 
+// Try Firebase first, fallback if modules not available
+let FirebaseService;
+try {
+  FirebaseService = require('./FirebaseService').default;
+} catch (error) {
+  console.warn('Using Firebase fallback in GunProfileService');
+  FirebaseService = require('./FirebaseServiceFallback').default;
+}
+
+// Helper function to ensure user is authenticated via Firebase
+const ensureAuthenticated = async () => {
+  try {
+    const firebaseUser = FirebaseService.getCurrentUser();
+    
+    if (!firebaseUser) {
+      throw new Error('User must be authenticated to access rifle profiles');
+    }
+    
+    // Return Firebase user ID for Supabase RLS
+    return { id: firebaseUser.uid, email: firebaseUser.email };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw new Error('Authentication required: Please sign in to continue');
+  }
+};
+
 export class GunProfileService {
   constructor() {
     this.tableName = 'rifle_profiles';
@@ -13,6 +39,9 @@ export class GunProfileService {
   // Fetch all rifle profiles for the current user
   async fetchProfiles() {
     try {
+      // Ensure user is authenticated
+      await ensureAuthenticated();
+
       const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
@@ -29,9 +58,13 @@ export class GunProfileService {
   // Create a new rifle profile
   async createProfile(profile) {
     try {
+      // Ensure user is authenticated and get user data
+      const user = await ensureAuthenticated();
+
       const { data, error } = await supabase
         .from(this.tableName)
         .insert([{
+          user_id: user.id,
           name: profile.name,
           caliber: profile.caliber,
           manufacturer: profile.manufacturer || null,
@@ -41,7 +74,8 @@ export class GunProfileService {
           notes: profile.notes || null,
           firearm_type: profile.firearm_type || 'rifle',
           total_rounds: 0,
-          last_cleaned_at: 0
+          last_cleaned_at: 0,
+          cleaning_interval: profile.cleaning_interval || 200
         }])
         .select()
         .single();
@@ -57,6 +91,9 @@ export class GunProfileService {
   // Update an existing rifle profile
   async updateProfile(id, updates) {
     try {
+      // Ensure user is authenticated
+      await ensureAuthenticated();
+
       const { data, error } = await supabase
         .from(this.tableName)
         .update({
@@ -68,6 +105,7 @@ export class GunProfileService {
           purchase_date: updates.purchase_date || null,
           notes: updates.notes || null,
           firearm_type: updates.firearm_type || 'rifle',
+          cleaning_interval: updates.cleaning_interval || 200,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -85,6 +123,9 @@ export class GunProfileService {
   // Delete a rifle profile
   async deleteProfile(id) {
     try {
+      // Ensure user is authenticated
+      await ensureAuthenticated();
+
       const { error } = await supabase
         .from(this.tableName)
         .delete()

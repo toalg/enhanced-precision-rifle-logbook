@@ -23,25 +23,27 @@ const CleaningProgressBar = ({
   const progress = Math.min((roundsSinceCleaning / cleaningInterval) * 100, 100);
   
   const getBarColor = () => {
-    if (progress <= 50) return Colors.success;
-    if (progress <= 80) return '#f39c12'; // orange
-    return Colors.error;
+    if (progress <= 50) return Colors.cleaningGood; // Green for good condition
+    if (progress <= 90) return Colors.cleaningWarning; // Yellow/orange for due soon
+    return Colors.cleaningCritical; // Red for needs cleaning
   };
 
   const getStatusText = () => {
     if (progress >= 100) return 'Needs Cleaning';
-    if (progress >= 80) return 'Due Soon';
+    if (progress >= 90) return 'Due Soon';
     return 'Good Condition';
   };
 
-  const needsCleaning = progress >= 100;
+  const needsCleaning = progress >= 90;
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.header}>
         <Text style={styles.label}>Cleaning Status</Text>
-        {needsCleaning && (
-          <Text style={styles.warning}>⚠️ {getStatusText()}</Text>
+        {(progress >= 90) && (
+          <Text style={[styles.warning, { color: progress >= 100 ? Colors.cleaningCritical : Colors.cleaningWarning }]}>
+            ⚠️ {getStatusText()}
+          </Text>
         )}
       </View>
       

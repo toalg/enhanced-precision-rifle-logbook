@@ -19,6 +19,7 @@ import AnalyticsScreen from './src/screens/AnalyticsScreen.js';
 import SettingsScreen from './src/screens/SettingsScreen.js';
 import GunProfilesScreen from './src/screens/GunProfilesScreen.js';
 import TestBackendScreen from './src/screens/TestBackendScreen.js';
+import AuthScreen from './src/screens/AuthScreen.js';
 
 // Import services
 import LogbookService from './src/services/LogbookService.js';
@@ -29,8 +30,10 @@ import { testSupabaseConnection } from './src/utils/testSupabase.js';
 // Import navigation styles
 import { NavigationStyles, NavigationColors } from './src/styles/NavigationStyles.js';
 
-// Import ProfileProvider
+// Import Providers
 import { ProfileProvider } from './src/context/ProfileContext.js';
+import { AuthProvider, useAuth } from './src/context/AuthContext.js';
+import { ThemeProvider } from './src/context/ThemeContext.js';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,6 +49,98 @@ const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => (
     {name === 'settings' && '⚙️'}
   </Text>
 );
+
+// Main app content component that uses auth context
+const AppContent = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#001233' }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 18, marginBottom: 16 }}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <ThemeProvider>
+      <ProfileProvider>
+        <NavigationContainer>
+          <StatusBar 
+            barStyle="light-content" 
+            backgroundColor="#001233" 
+            translucent={false}
+          />
+          
+          <Tab.Navigator
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused }) => (
+                <TabIcon name={route.name} focused={focused} />
+              ),
+              tabBarAccessibilityLabel: route.name === 'logbook' ? 'Logbook Tab' :
+                                       route.name === 'ladder' ? 'Ladder Test Tab' :
+                                       route.name === 'analytics' ? 'Analytics Tab' :
+                                       route.name === 'settings' ? 'Settings Tab' : route.name,
+              tabBarActiveTintColor: NavigationColors.active,
+              tabBarInactiveTintColor: NavigationColors.inactive,
+              tabBarStyle: NavigationStyles.tabBarStyle,
+              tabBarLabelStyle: NavigationStyles.tabBarLabelStyle,
+              tabBarIconStyle: NavigationStyles.tabBarIconStyle,
+              headerStyle: NavigationStyles.headerStyle,
+              headerTintColor: NavigationColors.text,
+              headerTitleStyle: NavigationStyles.headerTitleStyle,
+            })}
+          >
+            <Tab.Screen 
+              name="logbook" 
+              component={LogbookScreen}
+              options={{
+                title: 'Logbook',
+                headerTitle: 'Shooting Sessions',
+              }}
+            />
+            
+            <Tab.Screen 
+              name="ladder" 
+              component={LadderTestScreen}
+              options={{
+                title: 'Ladder',
+                headerTitle: 'Ladder Tests',
+              }}
+            />
+            
+            <Tab.Screen 
+              name="analytics" 
+              component={AnalyticsScreen}
+              options={{
+                title: 'Analytics',
+                headerTitle: 'Pro Analytics',
+                headerRight: () => (
+                  <Text style={NavigationStyles.proBadge}>PRO</Text>
+                ),
+              }}
+            />
+            
+            <Tab.Screen 
+              name="settings" 
+              component={SettingsScreen}
+              options={{
+                title: 'Settings',
+                headerTitle: 'Settings & Data',
+              }}
+            />
+          </Tab.Navigator>
+        </NavigationContainer>
+      </ProfileProvider>
+    </ThemeProvider>
+  );
+};
 
 const App = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -126,85 +221,9 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={NavigationStyles.safeAreaContainer}>
-        <ProfileProvider>
-          <NavigationContainer>
-          <StatusBar 
-            barStyle="light-content" 
-            backgroundColor="#001233" 
-            translucent={false}
-          />
-          
-          <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={route.name} focused={focused} />
-          ),
-          tabBarAccessibilityLabel: route.name === 'logbook' ? 'Logbook Tab' :
-                                   route.name === 'ladder' ? 'Ladder Test Tab' :
-                                   route.name === 'analytics' ? 'Analytics Tab' :
-                                   route.name === 'settings' ? 'Settings Tab' : route.name,
-          tabBarActiveTintColor: NavigationColors.active,
-          tabBarInactiveTintColor: NavigationColors.inactive,
-          tabBarStyle: NavigationStyles.tabBarStyle,
-          tabBarLabelStyle: NavigationStyles.tabBarLabelStyle,
-          tabBarIconStyle: NavigationStyles.tabBarIconStyle,
-          headerStyle: NavigationStyles.headerStyle,
-          headerTintColor: NavigationColors.text,
-          headerTitleStyle: NavigationStyles.headerTitleStyle,
-        })}
-      >
-        <Tab.Screen 
-          name="logbook" 
-          component={LogbookScreen}
-          options={{
-            title: 'Logbook',
-            headerTitle: 'Shooting Sessions',
-          }}
-        />
-        
-        <Tab.Screen 
-          name="ladder" 
-          component={LadderTestScreen}
-          options={{
-            title: 'Ladder',
-            headerTitle: 'Ladder Tests',
-          }}
-        />
-        
-        <Tab.Screen 
-          name="analytics" 
-          component={AnalyticsScreen}
-          options={{
-            title: 'Analytics',
-            headerTitle: 'Pro Analytics',
-            headerRight: () => (
-              <Text style={NavigationStyles.proBadge}>PRO</Text>
-            ),
-          }}
-        />
-        
-        <Tab.Screen 
-          name="settings" 
-          component={SettingsScreen}
-          options={{
-            title: 'Settings',
-            headerTitle: 'Settings & Data',
-          }}
-        />
-
-        {/* Temporarily disabled Firebase test tab
-        <Tab.Screen 
-          name="test" 
-          component={TestBackendScreen}
-          options={{
-            title: '🧪 Test',
-            headerTitle: 'Backend Test',
-          }}
-        />
-        */}
-          </Tab.Navigator>
-          </NavigationContainer>
-        </ProfileProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -26,9 +26,15 @@ export const Colors = {
   white: '#FFFFFF',
   black: '#001845',
   error: '#e74c3c',
-  warning: '#f1c40f',
+  warning: '#f39c12',
   success: '#27ae60',
   info: '#3498db',
+  grayLight: '#f8f9fa',
+  
+  // Cleaning status colors
+  cleaningGood: '#27ae60',
+  cleaningWarning: '#f39c12', 
+  cleaningCritical: '#e74c3c',
   
   // Semi-transparent
   overlay: 'rgba(0, 18, 51, 0.9)',
@@ -189,6 +195,16 @@ export const CommonStyles = StyleSheet.create({
   
   buttonSecondary: {
     backgroundColor: Colors.grayDeep,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    ...Shadows.small,
+  },
+  
+  buttonDanger: {
+    backgroundColor: Colors.error,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',

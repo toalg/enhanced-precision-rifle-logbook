@@ -16,18 +16,26 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: false,
+    debug: __DEV__
   },
   realtime: {
     transport: 'websocket',
-    timeout: 20000
+    timeout: 20000,
+    params: {
+      eventsPerSecond: 10
+    }
   },
   global: {
     headers: {
-      'X-Client-Info': 'supabase-js-react-native'
+      'X-Client-Info': 'supabase-js-react-native',
+      'apikey': supabaseAnonKey
     },
     fetch: createSafeFetch(),
     WebSocket: createSafeWebSocket
+  },
+  db: {
+    schema: 'public'
   }
 });
 

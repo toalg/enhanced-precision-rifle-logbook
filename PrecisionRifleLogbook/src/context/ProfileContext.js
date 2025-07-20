@@ -6,8 +6,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { GunProfileService } from '../services/GunProfileService';
+import { supabase } from '../config/supabase';
 
-const ProfileContext = createContext();
+const ProfileContext = createContext(null);
 
 export const useProfiles = () => {
   const context = useContext(ProfileContext);
@@ -20,19 +21,42 @@ export const useProfiles = () => {
 export const ProfileProvider = ({ children }) => {
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   
   const gunProfileService = new GunProfileService();
 
-  // Load profiles on mount
+  // Wait for auth to be ready
   useEffect(() => {
-    loadProfiles();
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          // Create anonymous session for development
+          await supabase.auth.signInAnonymously();
+        }
+        setAuthReady(true);
+      } catch (error) {
+        console.error('Auth setup error:', error);
+        setAuthReady(true); // Continue anyway
+      }
+    };
+
+    checkAuth();
   }, []);
+
+  // Load profiles once auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadProfiles();
+    }
+  }, [authReady]);
 
   // Create default .308 profile if no profiles exist
   useEffect(() => {
     const createDefaultProfile = async () => {
-      if (profiles.length === 0 && !loading) {
+      if (profiles.length === 0 && !loading && authReady) {
         try {
           console.log('Creating default .308 profile...');
           const defaultProfile = {
@@ -52,7 +76,7 @@ export const ProfileProvider = ({ children }) => {
     };
 
     createDefaultProfile();
-  }, [profiles.length, loading]);
+  }, [profiles.length, loading, authReady]);
 
   const loadProfiles = async () => {
     try {
@@ -68,6 +92,7 @@ export const ProfileProvider = ({ children }) => {
       console.error('Error loading profiles:', error);
     } finally {
       setLoading(false);
+      setIsInitialized(true);
     }
   };
 
@@ -242,6 +267,8 @@ export const ProfileProvider = ({ children }) => {
     selectedProfile,
     setSelectedProfile,
     loading,
+    isInitialized,
+    authReady,
     loadProfiles,
     createProfile,
     updateProfile,
