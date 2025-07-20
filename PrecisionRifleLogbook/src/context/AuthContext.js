@@ -1,18 +1,10 @@
 /**
- * Auth Context - Firebase Authentication Management
+ * Auth Context - Supabase Authentication Management
  * Handles user authentication state and session management
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-// Try Firebase first, fallback if modules not available
-let FirebaseService;
-try {
-  FirebaseService = require('../services/FirebaseService').default;
-} catch (error) {
-  console.warn('Using Firebase fallback due to module loading error');
-  FirebaseService = require('../services/FirebaseServiceFallback').default;
-}
+import SupabaseAuthService from '../services/SupabaseAuthService';
 
 const AuthContext = createContext(null);
 
@@ -28,27 +20,27 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [firebaseReady, setFirebaseReady] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    // Initialize Firebase and set up auth listener
+    // Initialize Supabase Auth and set up auth listener
     const initializeAuth = async () => {
       try {
-        // Wait for Firebase to initialize
-        const initResult = await FirebaseService.initialize();
-        setFirebaseReady(initResult.success);
+        // Wait for Supabase Auth to initialize
+        const initResult = await SupabaseAuthService.initialize();
+        setAuthReady(initResult.success);
         
         if (initResult.success) {
           // Get current user
-          const currentUser = FirebaseService.getCurrentUser();
+          const currentUser = SupabaseAuthService.getCurrentUser();
           setUser(currentUser);
           setIsAuthenticated(!!currentUser);
           
           // Listen for auth state changes
-          FirebaseService.addEventListener('authStateChanged', (firebaseUser) => {
-            console.log('Auth state changed:', firebaseUser?.uid);
-            setUser(firebaseUser);
-            setIsAuthenticated(!!firebaseUser);
+          SupabaseAuthService.addEventListener('authStateChanged', (supabaseUser) => {
+            console.log('Auth state changed:', supabaseUser?.id);
+            setUser(supabaseUser);
+            setIsAuthenticated(!!supabaseUser);
             setLoading(false);
           });
         }
@@ -63,17 +55,17 @@ export const AuthProvider = ({ children }) => {
 
     // Cleanup on unmount
     return () => {
-      FirebaseService.destroy();
+      SupabaseAuthService.destroy();
     };
   }, []);
 
   // Sign in with email and password
   const signIn = async (email, password) => {
-    if (!firebaseReady) {
-      throw new Error('Firebase not initialized');
+    if (!authReady) {
+      throw new Error('Authentication not initialized');
     }
     
-    const result = await FirebaseService.signInWithEmail(email, password);
+    const result = await SupabaseAuthService.signInWithEmail(email, password);
     if (!result.success) {
       throw new Error(result.error);
     }
@@ -83,11 +75,11 @@ export const AuthProvider = ({ children }) => {
 
   // Sign up with email and password
   const signUp = async (email, password, displayName = null) => {
-    if (!firebaseReady) {
-      throw new Error('Firebase not initialized');
+    if (!authReady) {
+      throw new Error('Authentication not initialized');
     }
     
-    const result = await FirebaseService.signUpWithEmail(email, password, displayName);
+    const result = await SupabaseAuthService.signUpWithEmail(email, password, displayName);
     if (!result.success) {
       throw new Error(result.error);
     }
@@ -97,19 +89,33 @@ export const AuthProvider = ({ children }) => {
 
   // Sign out
   const signOut = async () => {
-    if (!firebaseReady) {
-      throw new Error('Firebase not initialized');
+    if (!authReady) {
+      throw new Error('Authentication not initialized');
     }
     
-    const result = await FirebaseService.signOut();
+    const result = await SupabaseAuthService.signOut();
     if (!result.success) {
       throw new Error(result.error);
     }
   };
 
+  // Reset password
+  const resetPassword = async (email) => {
+    if (!authReady) {
+      throw new Error('Authentication not initialized');
+    }
+    
+    const result = await SupabaseAuthService.resetPassword(email);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    
+    return result.message;
+  };
+
   // Get user ID for Supabase integration
   const getUserId = () => {
-    return user?.uid || null;
+    return user?.id || null;
   };
 
   // Check if user is authenticated and throw error if not (for production)
@@ -124,10 +130,11 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated,
-    firebaseReady,
+    authReady,
     signIn,
     signUp,
     signOut,
+    resetPassword,
     getUserId,
     requireAuth,
   };

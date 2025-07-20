@@ -1,98 +1,53 @@
 /**
- * Unified Data Service - Abstraction Layer for Firebase and Supabase
- * Provides a unified interface for data operations, allowing easy switching between backends
+ * Unified Data Service - Supabase Integration
+ * Provides a unified interface for data operations using Supabase backend
  */
 
-import FirebaseService from './FirebaseService';
+import SupabaseAuthService from './SupabaseAuthService';
 import SupabaseService from './SupabaseService';
 
 class UnifiedDataService {
   constructor() {
-    this.currentBackend = 'supabase'; // Default to Supabase for main data
-    this.firebaseService = FirebaseService; // Use the singleton instance
-    this.supabaseService = SupabaseService; // Use the singleton instance
+    this.authService = SupabaseAuthService;
+    this.supabaseService = SupabaseService;
     this.listeners = new Map();
   }
 
-  // Configuration
-  setBackend(backend) {
-    if (['firebase', 'supabase'].includes(backend)) {
-      this.currentBackend = backend;
-      console.log(`Switched to ${backend} backend`);
-    }
-  }
-
-  getBackend() {
-    return this.currentBackend;
-  }
-
-  // Authentication (using available service)
+  // Authentication (using Supabase Auth)
   async signInWithEmail(email, password) {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return await this.firebaseService.signInWithEmail(email, password);
-    } else {
-      return await this.supabaseService.signInWithEmail(email, password);
-    }
+    return await this.authService.signInWithEmail(email, password);
   }
 
-  async signUpWithEmail(email, password) {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return await this.firebaseService.signUpWithEmail(email, password);
-    } else {
-      return await this.supabaseService.signUpWithEmail(email, password);
-    }
+  async signUpWithEmail(email, password, displayName = null) {
+    return await this.authService.signUpWithEmail(email, password, displayName);
   }
 
   async signOut() {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return await this.firebaseService.signOut();
-    } else {
-      return await this.supabaseService.signOut();
-    }
+    return await this.authService.signOut();
   }
 
   getCurrentUser() {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return this.firebaseService.getCurrentUser();
-    } else {
-      return this.supabaseService.getCurrentUser();
-    }
+    return this.authService.getCurrentUser();
   }
 
-  // Data Operations (using current backend)
+  // Data Operations (using Supabase)
   async saveShootingSession(sessionData) {
-    if (this.currentBackend === 'firebase') {
-      return await this.firebaseService.saveShootingSession(sessionData);
-    } else {
-      return await this.supabaseService.saveShootingSession(sessionData);
-    }
+    return await this.supabaseService.saveShootingSession(sessionData);
   }
 
   async getShootingSessions(limit = 50, offset = 0) {
-    if (this.currentBackend === 'firebase') {
-      return await this.firebaseService.getShootingSessions(limit, offset);
-    } else {
-      return await this.supabaseService.getShootingSessions(limit, offset);
-    }
+    return await this.supabaseService.getShootingSessions(limit, offset);
   }
 
   async saveLadderTest(ladderData) {
-    if (this.currentBackend === 'firebase') {
-      return await this.firebaseService.saveLadderTest(ladderData);
-    } else {
-      return await this.supabaseService.saveLadderTest(ladderData);
-    }
+    return await this.supabaseService.saveLadderTest(ladderData);
   }
 
   async getLadderTests(limit = 20, offset = 0) {
-    if (this.currentBackend === 'firebase') {
-      return await this.firebaseService.getLadderTests(limit, offset);
-    } else {
-      return await this.supabaseService.getLadderTests(limit, offset);
-    }
+    return await this.supabaseService.getLadderTests(limit, offset);
   }
 
-  // Daily Notes (Supabase only for now, as it's better for structured data)
+  // Daily Notes (Supabase)
   async saveDailyNote(noteData) {
     return await this.supabaseService.saveDailyNote(noteData);
   }
@@ -101,87 +56,50 @@ class UnifiedDataService {
     return await this.supabaseService.getDailyNote(date);
   }
 
-  // File Storage (use available service)
+  async getDailyNotes(limit = 50, offset = 0) {
+    return await this.supabaseService.getDailyNotes(limit, offset);
+  }
+
+  // File Upload (Supabase Storage)
   async uploadTargetPhoto(uri, sessionId) {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return await this.firebaseService.uploadTargetPhoto(uri, sessionId);
-    } else {
-      return await this.supabaseService.uploadTargetPhoto(uri, sessionId);
-    }
+    return await this.supabaseService.uploadTargetPhoto(uri, sessionId);
   }
 
   async uploadExportFile(fileUri, filename) {
-    if (this.firebaseService.isFirebaseAvailable()) {
-      return await this.firebaseService.uploadExportFile(fileUri, filename);
-    } else {
-      return await this.supabaseService.uploadExportFile(fileUri, filename);
-    }
+    return await this.supabaseService.uploadExportFile(fileUri, filename);
   }
 
-  // Dual Sync (save to both backends for redundancy)
-  async dualSyncSession(sessionData) {
-    try {
-      const results = await Promise.allSettled([
-        this.firebaseService.saveShootingSession(sessionData),
-        this.supabaseService.saveShootingSession(sessionData)
-      ]);
-
-      const firebaseResult = results[0];
-      const supabaseResult = results[1];
-
-      if (firebaseResult.status === 'fulfilled' && supabaseResult.status === 'fulfilled') {
-        return { 
-          success: true, 
-          firebaseId: firebaseResult.value.sessionId,
-          supabaseId: supabaseResult.value.sessionId
-        };
-      } else {
-        console.warn('Dual sync partially failed:', { firebaseResult, supabaseResult });
-        return { 
-          success: false, 
-          error: 'Partial sync failure',
-          firebaseResult,
-          supabaseResult
-        };
-      }
-    } catch (error) {
-      console.error('Dual sync error:', error);
-      return { success: false, error: error.message };
-    }
+  // Premium Features
+  async enablePremium() {
+    return await this.supabaseService.enablePremium();
   }
 
-  async dualSyncLadderTest(ladderData) {
-    try {
-      const results = await Promise.allSettled([
-        this.firebaseService.saveLadderTest(ladderData),
-        this.supabaseService.saveLadderTest(ladderData)
-      ]);
-
-      const firebaseResult = results[0];
-      const supabaseResult = results[1];
-
-      if (firebaseResult.status === 'fulfilled' && supabaseResult.status === 'fulfilled') {
-        return { 
-          success: true, 
-          firebaseId: firebaseResult.value.testId,
-          supabaseId: supabaseResult.value.testId
-        };
-      } else {
-        console.warn('Dual sync partially failed:', { firebaseResult, supabaseResult });
-        return { 
-          success: false, 
-          error: 'Partial sync failure',
-          firebaseResult,
-          supabaseResult
-        };
-      }
-    } catch (error) {
-      console.error('Dual sync error:', error);
-      return { success: false, error: error.message };
-    }
+  async checkPremiumStatus() {
+    return await this.supabaseService.checkPremiumStatus();
   }
 
-  // Real-time Subscriptions (Supabase for real-time features)
+  async toggleCloudSync() {
+    return await this.supabaseService.toggleCloudSync();
+  }
+
+  async getCloudSyncSetting() {
+    return await this.supabaseService.getCloudSyncSetting();
+  }
+
+  // Data Export/Import
+  async exportAllData() {
+    return await this.supabaseService.exportAllData();
+  }
+
+  async importData(data) {
+    return await this.supabaseService.importData(data);
+  }
+
+  async clearAllData() {
+    return await this.supabaseService.clearAllData();
+  }
+
+  // Event System
   subscribeToSessions(callback) {
     return this.supabaseService.subscribeToSessions(callback);
   }
@@ -190,7 +108,6 @@ class UnifiedDataService {
     return this.supabaseService.subscribeToLadderTests(callback);
   }
 
-  // Event System
   addEventListener(event, callback) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
@@ -214,67 +131,47 @@ class UnifiedDataService {
         try {
           callback(data);
         } catch (error) {
-          console.error('Error in unified event listener:', error);
+          console.error(`Error in event listener for ${event}:`, error);
         }
       });
     }
   }
 
-  // Initialize both services
+  // Initialization
   async initialize() {
     try {
-      console.log('Initializing Unified Data Service...');
+      console.log('Initializing UnifiedDataService...');
       
-      // Initialize both services
-      const firebaseResult = await this.firebaseService.initialize();
-      const supabaseResult = await this.supabaseService.initialize();
-
-      // Check if at least one service initialized successfully
-      const firebaseOk = firebaseResult.success;
-      const supabaseOk = supabaseResult.success;
-
-      if (supabaseOk) {
-        console.log('Unified Data Service initialized successfully (Supabase primary)');
-        
-        // Set up event forwarding
-        this.setupEventForwarding();
-        
-        return { success: true, backend: 'supabase', firebaseAvailable: firebaseOk };
-      } else if (firebaseOk) {
-        console.log('Unified Data Service initialized successfully (Firebase only)');
-        this.setBackend('firebase');
-        this.setupEventForwarding();
-        return { success: true, backend: 'firebase', supabaseAvailable: false };
-      } else {
-        console.error('Service initialization failed - no backends available:', { firebaseResult, supabaseResult });
-        return { success: false, error: 'No backends available', firebaseResult, supabaseResult };
+      // Initialize Supabase Auth
+      const authResult = await this.authService.initialize();
+      if (!authResult.success) {
+        console.error('Failed to initialize Supabase Auth:', authResult.error);
+        return { success: false, error: authResult.error };
       }
+
+      // Initialize Supabase Service
+      const supabaseResult = await this.supabaseService.initialize();
+      if (!supabaseResult.success) {
+        console.error('Failed to initialize Supabase Service:', supabaseResult.error);
+        return { success: false, error: supabaseResult.error };
+      }
+
+      console.log('UnifiedDataService initialized successfully');
+      return { success: true };
     } catch (error) {
-      console.error('Error initializing Unified Data Service:', error);
+      console.error('Error initializing UnifiedDataService:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Forward events from both services
+  // Setup event forwarding from Supabase services
   setupEventForwarding() {
-    // Firebase events
-    this.firebaseService.addEventListener('authStateChanged', (data) => {
-      this.emit('authStateChanged', data);
+    // Forward auth events
+    this.authService.addEventListener('authStateChanged', (user) => {
+      this.emit('authStateChanged', user);
     });
 
-    this.firebaseService.addEventListener('sessionSaved', (data) => {
-      this.emit('sessionSaved', data);
-    });
-
-    this.firebaseService.addEventListener('ladderTestSaved', (data) => {
-      this.emit('ladderTestSaved', data);
-    });
-
-    // Supabase events
-    this.supabaseService.addEventListener('authStateChanged', (data) => {
-      this.emit('authStateChanged', data);
-    });
-
+    // Forward data events
     this.supabaseService.addEventListener('sessionSaved', (data) => {
       this.emit('sessionSaved', data);
     });
@@ -283,16 +180,22 @@ class UnifiedDataService {
       this.emit('ladderTestSaved', data);
     });
 
-    this.supabaseService.addEventListener('dailyNoteSaved', (data) => {
-      this.emit('dailyNoteSaved', data);
+    this.supabaseService.addEventListener('premiumEnabled', (data) => {
+      this.emit('premiumEnabled', data);
+    });
+
+    this.supabaseService.addEventListener('cloudSyncToggled', (data) => {
+      this.emit('cloudSyncToggled', data);
     });
   }
 
   // Cleanup
   cleanup() {
+    this.authService.destroy();
     this.supabaseService.cleanup();
     this.listeners.clear();
   }
 }
 
+// Export singleton instance
 export default new UnifiedDataService(); 

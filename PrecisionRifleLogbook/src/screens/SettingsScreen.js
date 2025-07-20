@@ -378,8 +378,8 @@ const SettingsScreen = () => {
       
       <View style={styles.aboutInfo}>
         <Text style={styles.infoItem}>Email: {user?.email || 'Unknown'}</Text>
-        <Text style={styles.infoItem}>User ID: {user?.uid?.substring(0, 8) + '...' || 'N/A'}</Text>
-        {user?.displayName && <Text style={styles.infoItem}>Name: {user.displayName}</Text>}
+        <Text style={styles.infoItem}>User ID: {user?.id?.substring(0, 8) + '...' || 'N/A'}</Text>
+        {user?.user_metadata?.display_name && <Text style={styles.infoItem}>Name: {user.user_metadata.display_name}</Text>}
       </View>
       
       <Text style={styles.sectionDescription}>

@@ -1,107 +1,159 @@
-import React, { useState } from 'react';
-import { View, Text, Button, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import SupabaseAuthService from '../services/SupabaseAuthService';
 import SupabaseService from '../services/SupabaseService';
-import FirebaseService from '../services/FirebaseService';
+import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
+import Card from '../components/common/Card';
 
 const TestBackendScreen = () => {
-  const [supabaseResult, setSupabaseResult] = useState(null);
-  const [firebaseResult, setFirebaseResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [testResults, setTestResults] = useState({});
 
-  const testSupabase = async () => {
-    setLoading(true);
+  useEffect(() => {
+    runTests();
+  }, []);
+
+  const runTests = async () => {
+    const results = {};
+
+    // Test Supabase Auth Service
     try {
-      const result = await SupabaseService.initialize();
-      setSupabaseResult(result);
+      const initResult = await SupabaseAuthService.initialize();
+      const connectionResult = await SupabaseAuthService.testConnection();
+      
+      results.supabaseAuth = {
+        success: initResult.success && connectionResult.success,
+        initResult,
+        connectionResult,
+        isAvailable: SupabaseAuthService.isAvailable()
+      };
     } catch (error) {
-      setSupabaseResult({ success: false, error: error.message });
+      results.supabaseAuth = {
+        success: false,
+        error: error.message,
+        isAvailable: false
+      };
     }
-    setLoading(false);
+
+    // Test Supabase Service
+    try {
+      const initResult = await SupabaseService.initialize();
+      const connectionResult = await SupabaseService.testConnection();
+      
+      results.supabase = {
+        success: initResult.success && connectionResult.success,
+        initResult,
+        connectionResult,
+        isAvailable: SupabaseService.isAvailable()
+      };
+    } catch (error) {
+      results.supabase = {
+        success: false,
+        error: error.message,
+        isAvailable: false
+      };
+    }
+
+    setTestResults(results);
   };
 
-  const testFirebase = async () => {
-    setLoading(true);
-    try {
-      const initResult = await FirebaseService.initialize();
-      if (initResult.success && initResult.initialized) {
-        // Test actual Firebase connection
-        const connectionResult = await FirebaseService.testConnection();
-        setFirebaseResult({
-          initialization: initResult,
-          connection: connectionResult,
-          isAvailable: FirebaseService.isFirebaseAvailable()
-        });
-      } else {
-        setFirebaseResult({
-          initialization: initResult,
-          isAvailable: FirebaseService.isFirebaseAvailable()
-        });
-      }
-    } catch (error) {
-      setFirebaseResult({ success: false, error: error.message });
-    }
-    setLoading(false);
-  };
+  const renderTestResult = (serviceName, result) => (
+    <Card style={styles.testCard}>
+      <Text style={styles.serviceTitle}>{serviceName}</Text>
+      
+      <View style={styles.resultContainer}>
+        <Text style={[styles.status, result.success ? styles.success : styles.error]}>
+          {result.success ? '✓ SUCCESS' : '✗ FAILED'}
+        </Text>
+        
+        {result.error && (
+          <Text style={styles.errorText}>Error: {result.error}</Text>
+        )}
+        
+        {result.initResult && (
+          <Text style={styles.detailText}>
+            Init: {result.initResult.success ? '✓' : '✗'} {result.initResult.error || 'OK'}
+          </Text>
+        )}
+        
+        {result.connectionResult && (
+          <Text style={styles.detailText}>
+            Connection: {result.connectionResult.success ? '✓' : '✗'} {result.connectionResult.error || 'OK'}
+          </Text>
+        )}
+        
+        <Text style={styles.detailText}>
+          Available: {result.isAvailable ? '✓' : '✗'}
+        </Text>
+      </View>
+    </Card>
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Backend Connectivity Test</Text>
-      <Button title="Test Supabase Connection" onPress={testSupabase} disabled={loading} />
-      {supabaseResult && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultTitle}>Supabase Result:</Text>
-          <Text selectable style={styles.resultText}>{JSON.stringify(supabaseResult, null, 2)}</Text>
-        </View>
-      )}
-      <Button title="Test Firebase Connection" onPress={testFirebase} disabled={loading} />
-      {firebaseResult && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultTitle}>Firebase Result:</Text>
-          <Text selectable style={styles.resultText}>{JSON.stringify(firebaseResult, null, 2)}</Text>
-        </View>
-      )}
-      <Text style={styles.note}>
-        This screen is for development/testing only. Remove before production.
-      </Text>
-    </ScrollView>
+    <View style={CommonStyles.container}>
+      <ScrollView style={CommonStyles.contentContainer}>
+        <Text style={styles.title}>Backend Service Tests</Text>
+        <Text style={styles.subtitle}>Testing service connectivity and initialization</Text>
+        
+        {Object.keys(testResults).length > 0 ? (
+          <>
+            {renderTestResult('Supabase Auth', testResults.supabaseAuth)}
+            {renderTestResult('Supabase Service', testResults.supabase)}
+          </>
+        ) : (
+          <Card style={styles.testCard}>
+            <Text style={styles.loadingText}>Running tests...</Text>
+          </Card>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#f8f9fa',
-  },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#001233',
+    ...Typography.h1,
+    color: Colors.white,
+    marginBottom: Spacing.sm,
   },
-  resultBox: {
-    marginVertical: 16,
-    padding: 12,
-    backgroundColor: '#e9ecef',
-    borderRadius: 8,
-    width: '100%',
+  subtitle: {
+    ...Typography.body,
+    color: Colors.grayDark,
+    marginBottom: Spacing.lg,
   },
-  resultTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#0466C8',
+  testCard: {
+    marginBottom: Spacing.lg,
   },
-  resultText: {
-    fontFamily: 'monospace',
-    color: '#212529',
-    fontSize: 13,
+  serviceTitle: {
+    ...Typography.h3,
+    color: Colors.white,
+    marginBottom: Spacing.md,
   },
-  note: {
-    marginTop: 32,
-    color: '#7D8597',
-    fontSize: 12,
+  resultContainer: {
+    gap: Spacing.sm,
+  },
+  status: {
+    ...Typography.h4,
+    fontWeight: '600',
+    marginBottom: Spacing.sm,
+  },
+  success: {
+    color: Colors.success,
+  },
+  error: {
+    color: Colors.error,
+  },
+  errorText: {
+    ...Typography.bodySmall,
+    color: Colors.error,
+    fontStyle: 'italic',
+  },
+  detailText: {
+    ...Typography.bodySmall,
+    color: Colors.grayDark,
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.grayDark,
     textAlign: 'center',
   },
 });

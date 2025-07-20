@@ -1,52 +1,78 @@
 /**
- * Test script to verify app initialization without Firebase crashes
+ * Test Build Script - Verify all services can be imported and initialized
+ * Run with: node test-build.js
  */
 
-console.log('Testing app initialization...');
+console.log('🧪 Testing service imports and initialization...\n');
 
-// Test basic imports
+// Test Supabase Auth Service
 try {
-  console.log('✓ Testing basic React Native imports...');
-  const React = require('react');
-  const { NavigationContainer } = require('@react-navigation/native');
-  console.log('✓ React and Navigation imports successful');
-} catch (error) {
-  console.error('✗ Basic imports failed:', error.message);
-}
-
-// Test service imports
-try {
-  console.log('✓ Testing service imports...');
-  const LogbookService = require('./src/services/LogbookService.js');
-  console.log('✓ LogbookService import successful');
-} catch (error) {
-  console.error('✗ LogbookService import failed:', error.message);
-}
-
-// Test Firebase service (should not crash)
-try {
-  console.log('✓ Testing Firebase service import...');
-  const FirebaseService = require('./src/services/FirebaseService.js');
-  console.log('✓ FirebaseService import successful');
+  const SupabaseAuthService = require('./src/services/SupabaseAuthService.js');
+  console.log('✓ SupabaseAuthService import successful');
   
-  // Test initialization
-  const firebaseService = new FirebaseService();
-  firebaseService.initialize().then(result => {
-    console.log('✓ Firebase initialization result:', result);
+  const supabaseAuthService = new SupabaseAuthService();
+  supabaseAuthService.initialize().then(result => {
+    console.log('✓ SupabaseAuthService initialization:', result.success ? 'SUCCESS' : 'FAILED');
+    if (!result.success) {
+      console.error('  Error:', result.error);
+    }
   }).catch(error => {
-    console.log('⚠ Firebase initialization failed (expected):', error.message);
+    console.error('✗ SupabaseAuthService initialization failed:', error.message);
   });
 } catch (error) {
-  console.error('✗ FirebaseService import failed:', error.message);
+  console.error('✗ SupabaseAuthService import failed:', error.message);
+}
+
+// Test Supabase Service
+try {
+  const SupabaseService = require('./src/services/SupabaseService.js');
+  console.log('✓ SupabaseService import successful');
+  
+  const supabaseService = new SupabaseService();
+  supabaseService.initialize().then(result => {
+    console.log('✓ SupabaseService initialization:', result.success ? 'SUCCESS' : 'FAILED');
+    if (!result.success) {
+      console.error('  Error:', result.error);
+    }
+  }).catch(error => {
+    console.error('✗ SupabaseService initialization failed:', error.message);
+  });
+} catch (error) {
+  console.error('✗ SupabaseService import failed:', error.message);
 }
 
 // Test Unified Data Service
 try {
-  console.log('✓ Testing Unified Data Service...');
   const UnifiedDataService = require('./src/services/UnifiedDataService.js');
   console.log('✓ UnifiedDataService import successful');
+  
+  UnifiedDataService.initialize().then(result => {
+    console.log('✓ UnifiedDataService initialization:', result.success ? 'SUCCESS' : 'FAILED');
+    if (!result.success) {
+      console.error('  Error:', result.error);
+    }
+  }).catch(error => {
+    console.error('✗ UnifiedDataService initialization failed:', error.message);
+  });
 } catch (error) {
   console.error('✗ UnifiedDataService import failed:', error.message);
 }
 
-console.log('Test completed!'); 
+// Test Gun Profile Service
+try {
+  const GunProfileService = require('./src/services/GunProfileService.js');
+  console.log('✓ GunProfileService import successful');
+  
+  GunProfileService.initialize().then(result => {
+    console.log('✓ GunProfileService initialization:', result.success ? 'SUCCESS' : 'FAILED');
+    if (!result.success) {
+      console.error('  Error:', result.error);
+    }
+  }).catch(error => {
+    console.error('✗ GunProfileService initialization failed:', error.message);
+  });
+} catch (error) {
+  console.error('✗ GunProfileService import failed:', error.message);
+}
+
+console.log('\n🏁 Test build completed!'); 

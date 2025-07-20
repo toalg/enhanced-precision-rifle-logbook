@@ -4,27 +4,19 @@
  */
 
 import { supabase } from '../config/supabase';
+import SupabaseAuthService from './SupabaseAuthService';
 
-// Try Firebase first, fallback if modules not available
-let FirebaseService;
-try {
-  FirebaseService = require('./FirebaseService').default;
-} catch (error) {
-  console.warn('Using Firebase fallback in GunProfileService');
-  FirebaseService = require('./FirebaseServiceFallback').default;
-}
-
-// Helper function to ensure user is authenticated via Firebase
+// Helper function to ensure user is authenticated via Supabase Auth
 const ensureAuthenticated = async () => {
   try {
-    const firebaseUser = FirebaseService.getCurrentUser();
+    const supabaseUser = SupabaseAuthService.getCurrentUser();
     
-    if (!firebaseUser) {
+    if (!supabaseUser) {
       throw new Error('User must be authenticated to access rifle profiles');
     }
     
-    // Return Firebase user ID for Supabase RLS
-    return { id: firebaseUser.uid, email: firebaseUser.email };
+    // Return Supabase user ID for RLS
+    return { id: supabaseUser.id, email: supabaseUser.email };
   } catch (error) {
     console.error('Authentication error:', error);
     throw new Error('Authentication required: Please sign in to continue');
