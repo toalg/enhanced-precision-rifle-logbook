@@ -21,6 +21,7 @@ import Card from '../components/common/Card';
 
 import LogbookService from '../services/LogbookService';
 import { LadderTest, LadderCharge } from '../models/LadderTest';
+import { useProfiles } from '../context/ProfileContext';
 
 const LadderTestScreen = () => {
   const [ladderTests, setLadderTests] = useState([]);
@@ -37,6 +38,9 @@ const LadderTestScreen = () => {
   const [startCharge, setStartCharge] = useState('42.0');
   const [endCharge, setEndCharge] = useState('44.0');
   const [chargeIncrement, setChargeIncrement] = useState('0.2');
+
+  // Profile context
+  const { selectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
 
   useEffect(() => {
     loadLadderTests();
@@ -158,9 +162,16 @@ const LadderTestScreen = () => {
     try {
       setSaving(true);
       
+      // Ensure we have a selected profile
+      if (!selectedProfile) {
+        Alert.alert('Error', 'Please select a rifle profile first');
+        return;
+      }
+
       // Update charges in form data
       const updatedFormData = formData.clone();
       updatedFormData.charges = charges;
+      updatedFormData.rifle = selectedProfile.name;
       
       const validation = updatedFormData.validate();
       if (!validation.isValid) {
@@ -169,6 +180,13 @@ const LadderTestScreen = () => {
       }
 
       await LogbookService.saveLadderTest(updatedFormData.toJSON());
+      
+      // Add rounds to profile (charges.length rounds for ladder test)
+      try {
+        await addRoundsToProfile(selectedProfile.name, charges.length);
+      } catch (error) {
+        console.warn('Failed to update round count:', error);
+      }
       
       Alert.alert('Success', 'Ladder test saved successfully!');
     } catch (error) {
@@ -328,9 +346,11 @@ const LadderTestScreen = () => {
         
         <InputField
           label="Rifle Configuration"
-          value={formData.rifle}
+          value={selectedProfile?.name || formData.rifle}
           onChangeText={(value) => updateFormField('rifle', value)}
           placeholder="Remington 700 .308, 26in barrel"
+          editable={false}
+          style={styles.profileField}
           required
         />
         
@@ -472,7 +492,44 @@ const LadderTestScreen = () => {
         <View style={styles.header}>
           <Button
             title={showForm ? "📋 View Tests" : "🎯 New Ladder Test"}
-            onPress={() => setShowForm(!showForm)}
+            onPress={async () => {
+              if (!showForm) {
+                // Starting new ladder test - require profile selection
+                try {
+                  await requireProfileSelection();
+                  setShowForm(true);
+                } catch (error) {
+                  if (error.message === 'NEED_PROFILE_CREATION') {
+                    // User wants to create a profile - auto-create default and continue
+                    try {
+                      const defaultProfile = {
+                        name: 'My Rifle',
+                        caliber: '.308 Winchester',
+                        manufacturer: 'Custom',
+                        model: 'Custom Build',
+                        firearm_type: 'rifle',
+                        notes: 'Created automatically for first ladder test'
+                      };
+                      await createProfile(defaultProfile);
+                      Alert.alert(
+                        'Profile Created',
+                        'A default rifle profile has been created. You can edit it later in Settings.',
+                        [{ text: 'OK', onPress: () => setShowForm(true) }]
+                      );
+                    } catch (createError) {
+                      console.error('Error creating default profile:', createError);
+                      Alert.alert('Error', 'Failed to create profile. Please try again.');
+                    }
+                  } else if (error.message === 'PROFILE_CREATION_FAILED') {
+                    Alert.alert('Error', 'Failed to create profile. Please check your connection and try again.');
+                  } else if (error.message !== 'USER_CANCELLED') {
+                    console.error('Profile selection error:', error);
+                  }
+                }
+              } else {
+                setShowForm(false);
+              }
+            }}
             variant={showForm ? "secondary" : "primary"}
           />
         </View>
@@ -670,6 +727,11 @@ const styles = StyleSheet.create({
   
   emptyText: {
     color: Colors.grayDark,
+  },
+
+  profileField: {
+    backgroundColor: Colors.grayLight,
+    opacity: 0.8,
   },
 });
 

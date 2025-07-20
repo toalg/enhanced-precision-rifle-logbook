@@ -21,8 +21,11 @@ import Card from '../components/common/Card';
 
 import LogbookService from '../services/LogbookService';
 import { ShootingSession } from '../models/ShootingSession';
+import { useProfiles } from '../context/ProfileContext';
 
 const LogbookScreen = () => {
+  console.log('🔍 LogbookScreen rendering...');
+  
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +34,9 @@ const LogbookScreen = () => {
 
   // Form state (migrated from rifle_logbook.html form structure)
   const [formData, setFormData] = useState(() => ShootingSession.createEmpty());
+
+  // Profile context
+  const { selectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
 
   useEffect(() => {
     loadSessions();
@@ -98,13 +104,30 @@ const LogbookScreen = () => {
     try {
       setSaving(true);
       
-      const validation = formData.validate();
+      // Ensure we have a selected profile
+      if (!selectedProfile) {
+        Alert.alert('Error', 'Please select a rifle profile first');
+        return;
+      }
+
+      // Update form data with selected profile
+      const updatedFormData = formData.clone();
+      updatedFormData.rifleProfile = selectedProfile.name;
+      
+      const validation = updatedFormData.validate();
       if (!validation.isValid) {
         Alert.alert('Validation Error', validation.errors.join('\n'));
         return;
       }
 
-      await LogbookService.saveShootingSession(formData.toJSON());
+      await LogbookService.saveShootingSession(updatedFormData.toJSON());
+      
+      // Add rounds to profile (default 1 round per session, could be made configurable)
+      try {
+        await addRoundsToProfile(selectedProfile.name, 1);
+      } catch (error) {
+        console.warn('Failed to update round count:', error);
+      }
       
       Alert.alert('Success', 'Shooting session saved successfully!');
     } catch (error) {
@@ -183,9 +206,11 @@ const LogbookScreen = () => {
       
       <InputField
         label="Rifle Profile"
-        value={formData.rifleProfile}
+        value={selectedProfile?.name || formData.rifleProfile}
         onChangeText={(value) => updateFormField('rifleProfile', value)}
         placeholder="e.g., Remington 700 .308"
+        editable={false}
+        style={styles.profileField}
         required
       />
       
@@ -366,7 +391,44 @@ const LogbookScreen = () => {
         <View style={styles.header}>
           <Button
             title={showForm ? "📋 View Sessions" : "📝 New Session"}
-            onPress={() => setShowForm(!showForm)}
+            onPress={async () => {
+              if (!showForm) {
+                // Starting new session - require profile selection
+                try {
+                  await requireProfileSelection();
+                  setShowForm(true);
+                } catch (error) {
+                  if (error.message === 'NEED_PROFILE_CREATION') {
+                    // User wants to create a profile - auto-create default and continue
+                    try {
+                      const defaultProfile = {
+                        name: 'My Rifle',
+                        caliber: '.308 Winchester',
+                        manufacturer: 'Custom',
+                        model: 'Custom Build',
+                        firearm_type: 'rifle',
+                        notes: 'Created automatically for first session'
+                      };
+                      await createProfile(defaultProfile);
+                      Alert.alert(
+                        'Profile Created',
+                        'A default rifle profile has been created. You can edit it later in Settings.',
+                        [{ text: 'OK', onPress: () => setShowForm(true) }]
+                      );
+                    } catch (createError) {
+                      console.error('Error creating default profile:', createError);
+                      Alert.alert('Error', 'Failed to create profile. Please try again.');
+                    }
+                  } else if (error.message === 'PROFILE_CREATION_FAILED') {
+                    Alert.alert('Error', 'Failed to create profile. Please check your connection and try again.');
+                  } else if (error.message !== 'USER_CANCELLED') {
+                    console.error('Profile selection error:', error);
+                  }
+                }
+              } else {
+                setShowForm(false);
+              }
+            }}
             variant={showForm ? "secondary" : "primary"}
           />
         </View>
@@ -509,6 +571,11 @@ const styles = StyleSheet.create({
   
   emptyText: {
     color: Colors.grayDark,
+  },
+
+  profileField: {
+    backgroundColor: Colors.grayLight,
+    opacity: 0.8,
   },
 });
 

@@ -3,7 +3,7 @@
  * Displays rifle profiles with cleaning status and round counting
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,68 +16,50 @@ import {
   Modal,
   TextInput
 } from 'react-native';
-import GunProfileService from '../services/GunProfileService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import CleaningProgressBar from '../components/profiles/CleaningProgressBar';
+import { useProfiles } from '../context/ProfileContext';
+import { GunProfileService } from '../services/GunProfileService';
+
 const GunProfilesScreen = () => {
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  console.log('🔍 GunProfilesScreen rendering...');
+  
+  const {
+    profiles,
+    loading,
+    loadProfiles,
+    createProfile,
+    deleteProfile,
+    markAsCleaned
+  } = useProfiles();
+  
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  const [showCleaningModal, setShowCleaningModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const gunProfileService = new GunProfileService();
   const [newProfile, setNewProfile] = useState({
     name: '',
     caliber: '',
-    manufacturer: '',
     model: '',
-    cleaning_interval: 200,
-    notes: ''
+    purchase_date: '',
+    cleaning_interval: '',
+    notes: '',
+    firearm_type: 'rifle'
   });
 
   // Load profiles on component mount
   useEffect(() => {
+    console.log('🔍 GunProfilesScreen useEffect running...');
     loadProfiles();
-    
-    // Subscribe to real-time changes
-    const subscription = GunProfileService.subscribeToProfileChanges((payload) => {
-      console.log('Profile change detected:', payload);
-      loadProfiles();
-    });
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
   }, []);
 
-  const loadProfiles = async () => {
-    try {
-      setLoading(true);
-      const result = await GunProfileService.getRifleProfiles();
-      
-      if (result.success) {
-        setProfiles(result.profiles);
-      } else {
-        console.error('Failed to load profiles:', result.error);
-        Alert.alert('Error', 'Failed to load rifle profiles');
-      }
-    } catch (error) {
-      console.error('Error loading profiles:', error);
-      Alert.alert('Error', 'Failed to load rifle profiles');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadProfiles();
     setRefreshing(false);
-  };
+  }, [loadProfiles]);
 
-  const handleMarkAsCleaned = async (profile) => {
+  const handleMarkAsCleaned = useCallback(async (profile) => {
     Alert.alert(
       'Mark as Cleaned',
       `Mark "${profile.name}" as cleaned? This will reset the cleaning counter.`,
@@ -88,13 +70,8 @@ const GunProfilesScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await GunProfileService.markAsCleaned(profile.id);
-              if (result.success) {
-                Alert.alert('Success', `${profile.name} marked as cleaned!`);
-                loadProfiles();
-              } else {
-                Alert.alert('Error', result.error);
-              }
+              await markAsCleaned(profile);
+              Alert.alert('Success', `${profile.name} marked as cleaned!`);
             } catch (error) {
               console.error('Error marking as cleaned:', error);
               Alert.alert('Error', 'Failed to mark as cleaned');
@@ -103,9 +80,9 @@ const GunProfilesScreen = () => {
         }
       ]
     );
-  };
+  }, [markAsCleaned]);
 
-  const handleDeleteProfile = async (profile) => {
+  const handleDeleteProfile = useCallback(async (profile) => {
     Alert.alert(
       'Delete Profile',
       `Are you sure you want to delete "${profile.name}"? This action cannot be undone.`,
@@ -116,13 +93,8 @@ const GunProfilesScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await GunProfileService.deleteRifleProfile(profile.id);
-              if (result.success) {
-                Alert.alert('Success', `${profile.name} deleted successfully`);
-                loadProfiles();
-              } else {
-                Alert.alert('Error', result.error);
-              }
+              await deleteProfile(profile.id);
+              Alert.alert('Success', `${profile.name} deleted successfully`);
             } catch (error) {
               console.error('Error deleting profile:', error);
               Alert.alert('Error', 'Failed to delete profile');
@@ -131,45 +103,64 @@ const GunProfilesScreen = () => {
         }
       ]
     );
-  };
+  }, [deleteProfile]);
 
-  const handleAddProfile = () => {
+  const handleAddProfile = useCallback(() => {
     setShowAddModal(true);
-  };
+  }, []);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = useCallback(async () => {
     if (!newProfile.name.trim() || !newProfile.caliber.trim()) {
       Alert.alert('Error', 'Name and caliber are required');
       return;
     }
 
+    // Check if cleaning interval is blank
+    if (!newProfile.cleaning_interval.trim()) {
+      Alert.alert(
+        'No Cleaning Schedule',
+        'You haven\'t set a cleaning interval. This means no cleaning reminders will be shown. You can always edit this later.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Save Anyway',
+            onPress: () => saveProfileData()
+          }
+        ]
+      );
+      return;
+    }
+
+    saveProfileData();
+  }, [newProfile]);
+
+  const saveProfileData = useCallback(async () => {
     try {
-      const result = await GunProfileService.createRifleProfile(newProfile);
-      if (result.success) {
-        Alert.alert('Success', `${newProfile.name} added successfully`);
-        setShowAddModal(false);
-        setNewProfile({
-          name: '',
-          caliber: '',
-          manufacturer: '',
-          model: '',
-          cleaning_interval: 200,
-          notes: ''
-        });
-        loadProfiles();
-      } else {
-        Alert.alert('Error', result.error);
-      }
+      const profileData = {
+        ...newProfile,
+        cleaning_interval: newProfile.cleaning_interval.trim() ? parseInt(newProfile.cleaning_interval) || 200 : 200
+      };
+      
+      await createProfile(profileData);
+      Alert.alert('Success', `${newProfile.name} added successfully`);
+      setShowAddModal(false);
+      setNewProfile({
+        name: '',
+        caliber: '',
+        model: '',
+        purchase_date: '',
+        cleaning_interval: '',
+        notes: '',
+        firearm_type: 'rifle'
+      });
     } catch (error) {
       console.error('Error creating profile:', error);
       Alert.alert('Error', 'Failed to create profile');
     }
-  };
+  }, [newProfile, createProfile]);
 
-  const renderProfileCard = (profile) => {
-    const roundsSinceCleaning = profile.roundsSinceCleaning || 0;
-    const needsCleaning = profile.needsCleaning || false;
-    const cleaningProgress = Math.min((roundsSinceCleaning / profile.cleaning_interval) * 100, 100);
+  const renderProfileCard = useCallback((profile) => {
+    const roundsSinceCleaning = profile.total_rounds - profile.last_cleaned_at;
 
     return (
       <View key={profile.id} style={styles.profileCard}>
@@ -193,223 +184,198 @@ const GunProfilesScreen = () => {
 
         <View style={styles.profileDetails}>
           <Text style={styles.profileCaliber}>{profile.caliber}</Text>
-          {profile.manufacturer && (
-            <Text style={styles.profileManufacturer}>
-              {profile.manufacturer} {profile.model}
-            </Text>
+          {profile.model && (
+            <Text style={styles.profileModel}>{profile.model}</Text>
           )}
         </View>
 
         <View style={styles.roundsSection}>
           <Text style={styles.roundsLabel}>Total Rounds: {profile.total_rounds}</Text>
-          <Text style={styles.roundsLabel}>
-            Since Cleaning: {roundsSinceCleaning}
-          </Text>
+          <Text style={styles.roundsLabel}>Rounds Since Cleaning: {roundsSinceCleaning}</Text>
         </View>
 
-        <View style={styles.cleaningSection}>
-          <View style={styles.cleaningHeader}>
-            <Text style={styles.cleaningLabel}>
-              Cleaning Status ({roundsSinceCleaning}/{profile.cleaning_interval})
-            </Text>
-            {needsCleaning && (
-              <Text style={styles.cleaningWarning}>⚠️ Needs Cleaning</Text>
-            )}
-          </View>
-          
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { 
-                  width: `${cleaningProgress}%`,
-                  backgroundColor: needsCleaning ? '#FF6B6B' : '#4ECDC4'
-                }
-              ]} 
-            />
-          </View>
-        </View>
+        <CleaningProgressBar
+          roundsSinceCleaning={roundsSinceCleaning}
+          cleaningInterval={profile.cleaning_interval}
+          style={styles.cleaningProgressBar}
+        />
 
         {profile.notes && (
           <Text style={styles.profileNotes}>{profile.notes}</Text>
         )}
       </View>
     );
-  };
+  }, [handleMarkAsCleaned, handleDeleteProfile]);
 
-  const renderEmptyState = () => (
+  const renderEmptyState = useCallback(() => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>🔫</Text>
+      <Text style={styles.emptyStateIcon}>📋</Text>
       <Text style={styles.emptyStateTitle}>No Rifle Profiles</Text>
       <Text style={styles.emptyStateText}>
-        Add your first rifle profile to start tracking rounds and cleaning schedules.
+        Get started by adding your first rifle profile to track rounds and cleaning schedules.
       </Text>
-             <TouchableOpacity style={styles.addButton} onPress={() => handleAddProfile()}>
-         <Text style={styles.addButtonText}>Add Rifle Profile</Text>
-       </TouchableOpacity>
+      <TouchableOpacity style={styles.addButton} onPress={handleAddProfile}>
+        <Text style={styles.addButtonText}>Add Rifle Profile</Text>
+      </TouchableOpacity>
     </View>
-  );
+  ), [handleAddProfile]);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0466C8" />
-          <Text style={styles.loadingText}>Loading rifle profiles...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0466C8" />
+        <Text style={styles.loadingText}>Loading rifle profiles...</Text>
+      </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
+      <ScrollView 
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Rifle Profiles</Text>
+          <Text style={styles.title}>Gun Profiles</Text>
           <Text style={styles.subtitle}>
-            Track rounds and cleaning schedules for your firearms
+            Manage your rifle profiles and track cleaning schedules
           </Text>
         </View>
 
-        {profiles.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <View style={styles.profilesContainer}>
-            {profiles.map(renderProfileCard)}
+        <View style={styles.profilesContainer}>
+          {profiles.length === 0 ? renderEmptyState() : profiles.map(renderProfileCard)}
+        </View>
+
+        {profiles.length > 0 && (
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddProfile}>
+              <Text style={styles.addButtonText}>Add Rifle Profile</Text>
+            </TouchableOpacity>
           </View>
         )}
+      </ScrollView>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {profiles.length} rifle{profiles.length !== 1 ? 's' : ''} • 
-            {profiles.filter(p => p.needsCleaning).length} need cleaning
-          </Text>
-                 </View>
-       </ScrollView>
+      {/* Add Profile Modal */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Rifle Profile</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Rifle Name (e.g., Remington 700)"
+              placeholderTextColor="#7D8597"
+              value={newProfile.name}
+              onChangeText={(text) => setNewProfile({...newProfile, name: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Caliber (e.g., .308 Winchester)"
+              placeholderTextColor="#7D8597"
+              value={newProfile.caliber}
+              onChangeText={(text) => setNewProfile({...newProfile, caliber: text})}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Model (e.g., 700 SPS)"
+              placeholderTextColor="#7D8597"
+              value={newProfile.model}
+              onChangeText={(text) => setNewProfile({...newProfile, model: text})}
+            />
 
-       {/* Add Profile Modal */}
-       <Modal
-         visible={showAddModal}
-         animationType="slide"
-         transparent={true}
-         onRequestClose={() => setShowAddModal(false)}
-       >
-         <View style={styles.modalOverlay}>
-           <View style={styles.modalContent}>
-             <Text style={styles.modalTitle}>Add Rifle Profile</Text>
-             
-             <TextInput
-               style={styles.modalInput}
-               placeholder="Rifle Name (e.g., Remington 700)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.name}
-               onChangeText={(text) => setNewProfile({...newProfile, name: text})}
-             />
-             
-             <TextInput
-               style={styles.modalInput}
-               placeholder="Caliber (e.g., .308 Winchester)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.caliber}
-               onChangeText={(text) => setNewProfile({...newProfile, caliber: text})}
-             />
-             
-             <TextInput
-               style={styles.modalInput}
-               placeholder="Manufacturer (e.g., Remington)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.manufacturer}
-               onChangeText={(text) => setNewProfile({...newProfile, manufacturer: text})}
-             />
-             
-             <TextInput
-               style={styles.modalInput}
-               placeholder="Model (e.g., 700 SPS)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.model}
-               onChangeText={(text) => setNewProfile({...newProfile, model: text})}
-             />
-             
-             <TextInput
-               style={styles.modalInput}
-               placeholder="Cleaning Interval (default: 200 rounds)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.cleaning_interval.toString()}
-               onChangeText={(text) => setNewProfile({...newProfile, cleaning_interval: parseInt(text) || 200})}
-               keyboardType="numeric"
-             />
-             
-             <TextInput
-               style={[styles.modalInput, styles.modalTextArea]}
-               placeholder="Notes (optional)"
-               placeholderTextColor="#7D8597"
-               value={newProfile.notes}
-               onChangeText={(text) => setNewProfile({...newProfile, notes: text})}
-               multiline
-               numberOfLines={3}
-             />
-             
-             <View style={styles.modalButtons}>
-               <TouchableOpacity
-                 style={[styles.modalButton, styles.modalButtonCancel]}
-                 onPress={() => setShowAddModal(false)}
-               >
-                 <Text style={styles.modalButtonCancelText}>Cancel</Text>
-               </TouchableOpacity>
-               
-               <TouchableOpacity
-                 style={[styles.modalButton, styles.modalButtonSave]}
-                 onPress={handleSaveProfile}
-               >
-                 <Text style={styles.modalButtonSaveText}>Save Profile</Text>
-               </TouchableOpacity>
-             </View>
-           </View>
-         </View>
-       </Modal>
-     </SafeAreaView>
-   );
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Purchase Date (e.g., 2023-01-01)"
+              placeholderTextColor="#7D8597"
+              value={newProfile.purchase_date}
+              onChangeText={(text) => setNewProfile({...newProfile, purchase_date: text})}
+            />
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Cleaning Interval (e.g., 200 rounds) - Optional"
+              placeholderTextColor="#7D8597"
+              value={newProfile.cleaning_interval}
+              onChangeText={(text) => setNewProfile({...newProfile, cleaning_interval: text})}
+              keyboardType="numeric"
+            />
+            
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea]}
+              placeholder="Notes (optional)"
+              placeholderTextColor="#7D8597"
+              value={newProfile.notes}
+              onChangeText={(text) => setNewProfile({...newProfile, notes: text})}
+              multiline
+              numberOfLines={3}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={handleSaveProfile}
+              >
+                <Text style={styles.modalButtonSaveText}>Save Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#001233',
   },
   scrollView: {
     flex: 1,
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#33415C',
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: '#4A5568',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#001233',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7D8597',
+    color: '#E9ECEF',
     lineHeight: 22,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#001233',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#7D8597',
+    color: '#E9ECEF',
   },
   emptyState: {
     flex: 1,
@@ -424,12 +390,12 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#001233',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#7D8597',
+    color: '#E9ECEF',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -449,7 +415,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   profileCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#33415C',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -468,7 +434,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#001233',
+    color: '#FFFFFF',
     flex: 1,
   },
   profileActions: {
@@ -500,9 +466,11 @@ const styles = StyleSheet.create({
     color: '#0466C8',
     marginBottom: 4,
   },
-  profileManufacturer: {
+  profileModel: {
     fontSize: 14,
-    color: '#7D8597',
+    color: '#FFFFFF',
+    fontWeight: '500',
+    marginBottom: 2,
   },
   roundsSection: {
     flexDirection: 'row',
@@ -511,7 +479,7 @@ const styles = StyleSheet.create({
   },
   roundsLabel: {
     fontSize: 14,
-    color: '#33415C',
+    color: '#E9ECEF',
     fontWeight: '500',
   },
   cleaningSection: {
@@ -525,7 +493,7 @@ const styles = StyleSheet.create({
   },
   cleaningLabel: {
     fontSize: 14,
-    color: '#33415C',
+    color: '#E9ECEF',
     fontWeight: '500',
   },
   cleaningWarning: {
@@ -535,13 +503,24 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: '#001233',
     borderRadius: 4,
     overflow: 'hidden',
+    marginBottom: 4,
   },
   progressFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  cleaningInterval: {
+    fontSize: 12,
+    color: '#7D8597',
+    fontStyle: 'italic',
+  },
+  noCleaningSchedule: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    fontStyle: 'italic',
   },
   profileNotes: {
     fontSize: 14,

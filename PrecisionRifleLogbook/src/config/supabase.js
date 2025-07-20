@@ -4,13 +4,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createSafeFetch, createSafeWebSocket } from '../utils/RealtimeClientPatch';
 
 // Your Supabase project configuration
 // Get these values from your Supabase Dashboard
 const supabaseUrl = 'https://gbosucljjdpeslmwfjsb.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdib3N1Y2xqamRwZXNsbXdmanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MzkxMTUsImV4cCI6MjA2ODExNTExNX0.rKJF2SqMjuvNezXsXpAwSrunT4Ne0IYr6TsmJ1NwHzo';
 
-// Create Supabase client with React Native specific options
+// Create Supabase client with React Native specific options and safe utilities
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -24,7 +25,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'X-Client-Info': 'supabase-js-react-native'
-    }
+    },
+    fetch: createSafeFetch(),
+    WebSocket: createSafeWebSocket
   }
 });
 
