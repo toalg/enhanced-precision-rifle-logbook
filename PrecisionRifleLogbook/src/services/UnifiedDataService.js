@@ -9,8 +9,8 @@ import SupabaseService from './SupabaseService';
 class UnifiedDataService {
   constructor() {
     this.currentBackend = 'supabase'; // Default to Supabase for main data
-    this.firebaseService = new FirebaseService();
-    this.supabaseService = new SupabaseService();
+    this.firebaseService = FirebaseService; // Use the singleton instance
+    this.supabaseService = SupabaseService; // Use the singleton instance
     this.listeners = new Map();
   }
 

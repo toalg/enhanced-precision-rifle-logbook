@@ -22,8 +22,21 @@ const TestBackendScreen = () => {
   const testFirebase = async () => {
     setLoading(true);
     try {
-      const result = await FirebaseService.initialize();
-      setFirebaseResult(result);
+      const initResult = await FirebaseService.initialize();
+      if (initResult.success && initResult.initialized) {
+        // Test actual Firebase connection
+        const connectionResult = await FirebaseService.testConnection();
+        setFirebaseResult({
+          initialization: initResult,
+          connection: connectionResult,
+          isAvailable: FirebaseService.isFirebaseAvailable()
+        });
+      } else {
+        setFirebaseResult({
+          initialization: initResult,
+          isAvailable: FirebaseService.isFirebaseAvailable()
+        });
+      }
     } catch (error) {
       setFirebaseResult({ success: false, error: error.message });
     }

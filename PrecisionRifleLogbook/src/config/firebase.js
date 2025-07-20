@@ -4,15 +4,12 @@
  */
 
 export const firebaseConfig = {
-  // Your Firebase project configuration
-  // Get these values from your Firebase Console
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID" // Optional, for Analytics
+  apiKey: "AIzaSyClgqto0B-sljcpbkNafHgusw7oPSDVsZk",
+  authDomain: "prs-log-book.firebaseapp.com",
+  projectId: "prs-log-book",
+  storageBucket: "prs-log-book.firebasestorage.app",
+  messagingSenderId: "560300801821",
+  appId: "1:560300801821:ios:2fb509f421ada3bb8c6bf4"
 };
 
 // Firebase service initialization

@@ -19,6 +19,9 @@ import TestBackendScreen from './src/screens/TestBackendScreen.js';
 import LogbookService from './src/services/LogbookService.js';
 import UnifiedDataService from './src/services/UnifiedDataService.js';
 
+// Initialize Firebase
+import '@react-native-firebase/app';
+
 const Tab = createBottomTabNavigator();
 
 // Simple icon component for now
@@ -137,6 +140,7 @@ const App = () => {
           }}
         />
 
+        {/* Temporarily disabled Firebase test tab
         <Tab.Screen 
           name="test" 
           component={TestBackendScreen}
@@ -145,6 +149,7 @@ const App = () => {
             headerTitle: 'Backend Test',
           }}
         />
+        */}
       </Tab.Navigator>
     </NavigationContainer>
   );

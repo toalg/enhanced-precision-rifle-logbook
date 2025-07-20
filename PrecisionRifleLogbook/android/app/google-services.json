@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "560300801821",
+    "project_id": "prs-log-book",
+    "storage_bucket": "prs-log-book.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:560300801821:android:2fb509f421ada3bb8c6bf4",
+        "android_client_info": {
+          "package_name": "com.precisionriflelogbook"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "560300801821-bv56hc6i82sn8j7c6p9j6gh8oo9111kc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClgqto0B-sljcpbkNafHgusw7oPSDVsZk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "560300801821-bv56hc6i82sn8j7c6p9j6gh8oo9111kc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

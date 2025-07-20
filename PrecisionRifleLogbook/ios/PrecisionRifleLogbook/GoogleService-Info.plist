@@ -2,33 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- 
-	PLACEHOLDER FILE - REPLACE WITH YOUR ACTUAL FIREBASE CONFIGURATION
-	
-	To get your GoogleService-Info.plist:
-	1. Go to https://console.firebase.google.com/
-	2. Select your project
-	3. Go to Project Settings (gear icon)
-	4. Under "Your apps", click the iOS app
-	5. Download GoogleService-Info.plist
-	6. Replace this file with the downloaded one
-	
-	Make sure to add this file to your Xcode project:
-	1. Drag GoogleService-Info.plist into Xcode project navigator
-	2. Make sure "Add to target" is checked for your app target
-	-->
+	<key>CLIENT_ID</key>
+	<string>560300801821-bv56hc6i82sn8j7c6p9j6gh8oo9111kc.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.560300801821-bv56hc6i82sn8j7c6p9j6gh8oo9111kc</string>
 	<key>API_KEY</key>
-	<string>YOUR_API_KEY_HERE</string>
+	<string>AIzaSyClgqto0B-sljcpbkNafHgusw7oPSDVsZk</string>
 	<key>GCM_SENDER_ID</key>
-	<string>YOUR_GCM_SENDER_ID_HERE</string>
+	<string>560300801821</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.precisionriflelogbook</string>
 	<key>PROJECT_ID</key>
-	<string>YOUR_PROJECT_ID_HERE</string>
+	<string>prs-log-book</string>
 	<key>STORAGE_BUCKET</key>
-	<string>YOUR_PROJECT_ID_HERE.appspot.com</string>
+	<string>prs-log-book.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -40,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>YOUR_GOOGLE_APP_ID_HERE</string>
+	<string>1:560300801821:ios:2fb509f421ada3bb8c6bf4</string>
 </dict>
 </plist> 
