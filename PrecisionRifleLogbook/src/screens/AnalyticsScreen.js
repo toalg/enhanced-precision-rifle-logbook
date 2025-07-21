@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
+import { CommonStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 

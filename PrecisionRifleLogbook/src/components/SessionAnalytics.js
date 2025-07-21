@@ -10,7 +10,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from './common/AppStyles';
+import { Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
 import Card from './common/Card';
 
 const SessionAnalytics = ({ sessions }) => {
