@@ -138,13 +138,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: 16,
-    color: Colors.black,
+    color: Colors.gray,
     minHeight: 48,
   },
   
   inputFocused: {
     borderColor: Colors.primary,
     backgroundColor: Colors.white,
+    color: Colors.black,
   },
   
   inputError: {

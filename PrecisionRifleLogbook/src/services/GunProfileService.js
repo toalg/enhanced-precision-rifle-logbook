@@ -217,10 +217,24 @@ export class GunProfileService {
   // Update round count for a profile (called by session service)
   async updateRoundCount(profileName, roundsFired) {
     try {
+      // First get the current profile to get the current total_rounds
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from(this.tableName)
+        .select('total_rounds')
+        .eq('name', profileName)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calculate new total
+      const currentRounds = currentProfile?.total_rounds || 0;
+      const newTotal = currentRounds + (roundsFired || 1);
+
+      // Update with the new total
       const { error } = await supabase
         .from(this.tableName)
         .update({
-          total_rounds: supabase.rpc('increment', { x: roundsFired || 1 }),
+          total_rounds: newTotal,
           updated_at: new Date().toISOString()
         })
         .eq('name', profileName);

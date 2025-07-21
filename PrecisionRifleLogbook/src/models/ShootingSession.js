@@ -13,6 +13,10 @@ export class ShootingSession {
     this.rifleProfile = data.rifleProfile || ''; // Legacy field for backward compatibility
     this.rounds = data.rounds || 0; // Number of rounds fired in this session
     
+    // Multi-shot support
+    this.shots = data.shots || []; // Array of individual shots
+    this.totalShots = data.totalShots || 0; // Total number of shots in session
+    
     this.rangeDistance = data.rangeDistance || 0;
     this.rangeUnit = data.rangeUnit || 'yards';
     this.ammoType = data.ammoType || '';
@@ -63,9 +67,19 @@ export class ShootingSession {
       errors.push('Number of rounds cannot be negative');
     }
 
-    if (!this.rangeDistance || this.rangeDistance <= 0) {
-      errors.push('Range distance must be greater than 0');
+    // Validate shots if present
+    if (this.shots && this.shots.length > 0) {
+      this.shots.forEach((shot, index) => {
+        if (shot.targetDistance && (isNaN(shot.targetDistance) || shot.targetDistance <= 0)) {
+          errors.push(`Shot ${index + 1}: Target distance must be a positive number`);
+        }
+        if (shot.measuredVelocity && (isNaN(shot.measuredVelocity) || shot.measuredVelocity <= 0)) {
+          errors.push(`Shot ${index + 1}: Measured velocity must be a positive number`);
+        }
+      });
     }
+
+
 
     if (!this.ammoType || this.ammoType.trim().length === 0) {
       errors.push('Ammunition type is required');
@@ -97,6 +111,42 @@ export class ShootingSession {
 
   isLegacySession() {
     return !this.profileId && this.rifleProfile;
+  }
+
+  // Multi-shot Methods
+  hasShots() {
+    return this.shots && this.shots.length > 0;
+  }
+
+  getShotCount() {
+    return this.shots ? this.shots.length : 0;
+  }
+
+  addShot(shot) {
+    if (!this.shots) {
+      this.shots = [];
+    }
+    this.shots.push(shot);
+    this.totalShots = this.shots.length;
+    this.touch();
+  }
+
+  removeShot(shotId) {
+    if (this.shots) {
+      this.shots = this.shots.filter(shot => shot.id !== shotId);
+      this.totalShots = this.shots.length;
+      this.touch();
+    }
+  }
+
+  updateShot(shotId, field, value) {
+    if (this.shots) {
+      const shotIndex = this.shots.findIndex(shot => shot.id === shotId);
+      if (shotIndex !== -1) {
+        this.shots[shotIndex] = { ...this.shots[shotIndex], [field]: value };
+        this.touch();
+      }
+    }
   }
 
   getProfileReference() {

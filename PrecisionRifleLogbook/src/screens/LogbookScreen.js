@@ -18,6 +18,7 @@ import { CommonStyles, Colors, Typography, Spacing } from '../components/common/
 import Button from '../components/common/Button';
 import InputField from '../components/common/InputField';
 import Card from '../components/common/Card';
+import ShootingTable from '../components/ShootingTable';
 
 import LogbookService from '../services/LogbookService';
 import { ShootingSession } from '../models/ShootingSession';
@@ -30,10 +31,12 @@ const LogbookScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showTable, setShowTable] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Form state (migrated from rifle_logbook.html form structure)
   const [formData, setFormData] = useState(() => ShootingSession.createEmpty());
+  const [sessionData, setSessionData] = useState(null);
 
   // Profile context
   const { selectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
@@ -76,6 +79,8 @@ const LogbookScreen = () => {
 
   const resetForm = () => {
     setFormData(ShootingSession.createEmpty());
+    setSessionData(null);
+    setShowTable(false);
   };
 
   const updateFormField = (field, value) => {
@@ -100,10 +105,8 @@ const LogbookScreen = () => {
     Alert.alert('Weather Data', 'Environmental data simulated and auto-filled!');
   };
 
-  const validateAndSave = async () => {
+  const validateAndProceedToTable = async () => {
     try {
-      setSaving(true);
-      
       // Ensure we have a selected profile
       if (!selectedProfile) {
         Alert.alert('Error', 'Please select a rifle profile first');
@@ -120,16 +123,31 @@ const LogbookScreen = () => {
         return;
       }
 
-      await LogbookService.saveShootingSession(updatedFormData.toJSON());
+      // Store session data and proceed to table
+      setSessionData(updatedFormData.toJSON());
+      setShowForm(false);
+      setShowTable(true);
+    } catch (error) {
+      console.error('Error validating session:', error);
+      Alert.alert('Error', 'Failed to validate session: ' + error.message);
+    }
+  };
+
+  const handleSaveSession = async (sessionWithShots) => {
+    try {
+      setSaving(true);
       
-      // Add rounds to profile (default 1 round per session, could be made configurable)
+      await LogbookService.saveShootingSession(sessionWithShots);
+      
+      // Add rounds to profile based on actual shots
       try {
-        await addRoundsToProfile(selectedProfile.name, 1);
+        await addRoundsToProfile(selectedProfile.name, sessionWithShots.totalShots);
       } catch (error) {
         console.warn('Failed to update round count:', error);
       }
       
-      Alert.alert('Success', 'Shooting session saved successfully!');
+      Alert.alert('Success', `Shooting session saved with ${sessionWithShots.totalShots} shots!`);
+      resetForm();
     } catch (error) {
       console.error('Error saving session:', error);
       Alert.alert('Error', 'Failed to save session: ' + error.message);
@@ -213,27 +231,7 @@ const LogbookScreen = () => {
         required
       />
       
-      <View style={styles.row}>
-        <View style={styles.flex1}>
-          <InputField
-            label="Range Distance"
-            value={formData.rangeDistance?.toString() || ''}
-            onChangeText={(value) => updateFormField('rangeDistance', parseFloat(value) || 0)}
-            placeholder="100"
-            keyboardType="numeric"
-            required
-          />
-        </View>
-        
-        <View style={styles.unitSelector}>
-          <InputField
-            label="Unit"
-            value={formData.rangeUnit}
-            onChangeText={(value) => updateFormField('rangeUnit', value)}
-            placeholder="yards"
-          />
-        </View>
-      </View>
+
       
       <InputField
         label="Ammo Type & Lot"
@@ -311,30 +309,7 @@ const LogbookScreen = () => {
         placeholder="3 o'clock or 090°"
       />
 
-      {/* Ballistic Data */}
-      <Text style={styles.sectionTitle}>Predicted vs Actual</Text>
-      
-      <View style={styles.row}>
-        <View style={styles.flex1}>
-          <InputField
-            label="Predicted Elevation"
-            value={formData.predElevation?.toString() || ''}
-            onChangeText={(value) => updateFormField('predElevation', parseFloat(value) || null)}
-            placeholder="2.5"
-            keyboardType="numeric"
-          />
-        </View>
-        
-        <View style={styles.flex1}>
-          <InputField
-            label="Actual Elevation"
-            value={formData.actualElevation?.toString() || ''}
-            onChangeText={(value) => updateFormField('actualElevation', parseFloat(value) || null)}
-            placeholder="2.3"
-            keyboardType="numeric"
-          />
-        </View>
-      </View>
+
 
       {/* Notes */}
       <InputField
@@ -349,8 +324,8 @@ const LogbookScreen = () => {
       {/* Form Actions */}
       <View style={styles.formActions}>
         <Button
-          title="Save Session"
-          onPress={validateAndSave}
+          title="Continue to Shots"
+          onPress={validateAndProceedToTable}
           loading={saving}
           variant="primary"
           style={styles.saveButton}
@@ -388,52 +363,71 @@ const LogbookScreen = () => {
       >
         {/* Header Actions */}
         <View style={styles.header}>
-          <Button
-            title={showForm ? "View Sessions" : "New Session"}
-            onPress={async () => {
-              if (!showForm) {
-                // Starting new session - require profile selection
-                try {
-                  await requireProfileSelection();
-                  setShowForm(true);
-                } catch (error) {
-                  if (error.message === 'NEED_PROFILE_CREATION') {
-                    // User wants to create a profile - auto-create default and continue
-                    try {
-                      const defaultProfile = {
-                        name: 'My Rifle',
-                        caliber: '.308 Winchester',
-                        manufacturer: 'Custom',
-                        model: 'Custom Build',
-                        firearm_type: 'rifle',
-                        notes: 'Created automatically for first session'
-                      };
-                      await createProfile(defaultProfile);
-                      Alert.alert(
-                        'Profile Created',
-                        'A default rifle profile has been created. You can edit it later in Settings.',
-                        [{ text: 'OK', onPress: () => setShowForm(true) }]
-                      );
-                    } catch (createError) {
-                      console.error('Error creating default profile:', createError);
-                      Alert.alert('Error', 'Failed to create profile. Please try again.');
+          {showTable ? (
+            <Button
+              title="Back to Setup"
+              onPress={() => {
+                setShowTable(false);
+                setShowForm(true);
+              }}
+              variant="secondary"
+            />
+          ) : (
+            <Button
+              title={showForm ? "View Sessions" : "New Session"}
+              onPress={async () => {
+                if (!showForm) {
+                  // Starting new session - require profile selection
+                  try {
+                    await requireProfileSelection();
+                    setShowForm(true);
+                  } catch (error) {
+                    if (error.message === 'NEED_PROFILE_CREATION') {
+                      // User wants to create a profile - auto-create default and continue
+                      try {
+                        const defaultProfile = {
+                          name: 'My Rifle',
+                          caliber: '.308 Winchester',
+                          manufacturer: 'Custom',
+                          model: 'Custom Build',
+                          firearm_type: 'rifle',
+                          notes: 'Created automatically for first session'
+                        };
+                        await createProfile(defaultProfile);
+                        Alert.alert(
+                          'Profile Created',
+                          'A default rifle profile has been created. You can edit it later in Settings.',
+                          [{ text: 'OK', onPress: () => setShowForm(true) }]
+                        );
+                      } catch (createError) {
+                        console.error('Error creating default profile:', createError);
+                        Alert.alert('Error', 'Failed to create profile. Please try again.');
+                      }
+                    } else if (error.message === 'PROFILE_CREATION_FAILED') {
+                      Alert.alert('Error', 'Failed to create profile. Please check your connection and try again.');
+                    } else if (error.message !== 'USER_CANCELLED') {
+                      console.error('Profile selection error:', error);
                     }
-                  } else if (error.message === 'PROFILE_CREATION_FAILED') {
-                    Alert.alert('Error', 'Failed to create profile. Please check your connection and try again.');
-                  } else if (error.message !== 'USER_CANCELLED') {
-                    console.error('Profile selection error:', error);
                   }
+                } else {
+                  setShowForm(false);
                 }
-              } else {
-                setShowForm(false);
-              }
-            }}
-            variant={showForm ? "secondary" : "primary"}
-          />
+              }}
+              variant={showForm ? "secondary" : "primary"}
+            />
+          )}
         </View>
 
         {/* Content */}
-        {showForm ? (
+        {showTable ? (
+          <ShootingTable
+            sessionData={sessionData}
+            onSaveSession={handleSaveSession}
+            onAddShot={(shot) => console.log('Shot added:', shot)}
+            onUpdateShot={(shotId, field, value) => console.log('Shot updated:', shotId, field, value)}
+            onDeleteShot={(shotId) => console.log('Shot deleted:', shotId)}
+          />
+        ) : showForm ? (
           renderForm()
         ) : (
           <>
