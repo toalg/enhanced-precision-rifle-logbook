@@ -12,6 +12,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 
 import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
@@ -19,6 +20,7 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
 import LogbookService from '../services/LogbookService';
+import SessionAnalytics from '../components/SessionAnalytics';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +30,8 @@ const AnalyticsScreen = () => {
   const [ladderTests, setLadderTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [analysis, setAnalysis] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' or 'premium'
 
   useEffect(() => {
     initializeScreen();
@@ -47,6 +51,10 @@ const AnalyticsScreen = () => {
   const initializeScreen = async () => {
     try {
       setLoading(true);
+      
+      // Load shooting sessions for analytics
+      const sessionData = await LogbookService.getShootingSessions(50, 0);
+      setSessions(sessionData);
       
       // Check premium status
       const premium = await LogbookService.checkPremiumStatus();
@@ -303,6 +311,31 @@ const AnalyticsScreen = () => {
     </ScrollView>
   );
 
+  const renderTabSelector = () => (
+    <View style={styles.tabContainer}>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'sessions' && styles.activeTab]}
+        onPress={() => setActiveTab('sessions')}
+      >
+        <Text style={[styles.tabText, activeTab === 'sessions' && styles.activeTabText]}>
+          📊 Session Analytics
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'premium' && styles.activeTab]}
+        onPress={() => setActiveTab('premium')}
+      >
+        <Text style={[styles.tabText, activeTab === 'premium' && styles.activeTabText]}>
+          🚀 Premium Features
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderSessionAnalytics = () => (
+    <SessionAnalytics sessions={sessions} />
+  );
+
   const renderFreeTier = () => (
     <View style={styles.upgradeContainer}>
       <Card variant="primary" style={styles.upgradeCard}>
@@ -358,13 +391,46 @@ const AnalyticsScreen = () => {
   return (
     <View style={CommonStyles.container}>
       <View style={CommonStyles.contentContainer}>
-        {isPremium ? renderPremiumFeatures() : renderFreeTier()}
+        {renderTabSelector()}
+        {activeTab === 'sessions' ? renderSessionAnalytics() : 
+         (isPremium ? renderPremiumFeatures() : renderFreeTier())}
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: Spacing.lg,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xs,
+  },
+  
+  tab: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+  },
+  
+  activeTab: {
+    backgroundColor: Colors.primary,
+  },
+  
+  tabText: {
+    ...Typography.body,
+    color: Colors.grayDeep,
+    fontWeight: '500',
+  },
+  
+  activeTabText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
+  
   selectorCard: {
     marginBottom: Spacing.lg,
   },

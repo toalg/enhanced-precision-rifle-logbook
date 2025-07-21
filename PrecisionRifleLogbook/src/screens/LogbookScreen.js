@@ -156,11 +156,31 @@ const LogbookScreen = () => {
     }
   };
 
+  const handleEditSession = (session) => {
+    // Load session data into form
+    setFormData(ShootingSession.fromJSON(session));
+    setSessionData(session);
+    setShowForm(true);
+    setShowTable(false);
+    
+    // If session has shots, go directly to table
+    if (session.shots && session.shots.length > 0) {
+      setShowForm(false);
+      setShowTable(true);
+    }
+  };
+
   const renderSessionItem = (session, index) => (
     <Card key={session.id} style={styles.sessionCard}>
       <View style={styles.sessionHeader}>
         <Text style={styles.sessionDate}>{session.getFormattedDate()}</Text>
         <Text style={styles.sessionRifle}>{session.rifleProfile}</Text>
+        <TouchableOpacity 
+          style={styles.editButton}
+          onPress={() => handleEditSession(session)}
+        >
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
       </View>
       
       <View style={styles.sessionDetails}>
@@ -185,6 +205,13 @@ const LogbookScreen = () => {
           <Text style={styles.sessionDetail}>
             <Text style={styles.sessionDetailLabel}>Conditions: </Text>
             {session.getEnvironmentalSummary()}
+          </Text>
+        )}
+        
+        {session.shots && session.shots.length > 0 && (
+          <Text style={styles.sessionDetail}>
+            <Text style={styles.sessionDetailLabel}>Shots: </Text>
+            {session.shots.length} recorded
           </Text>
         )}
       </View>
@@ -519,6 +546,21 @@ const styles = StyleSheet.create({
   
   sessionHeader: {
     marginBottom: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  editButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  
+  editButtonText: {
+    ...Typography.label,
+    color: Colors.white,
   },
   
   sessionDate: {
