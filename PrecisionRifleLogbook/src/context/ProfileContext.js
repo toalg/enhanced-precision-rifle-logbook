@@ -7,6 +7,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { GunProfileService } from '../services/GunProfileService';
 import { supabase } from '../config/supabase';
+import { useAuth } from './AuthContext';
 
 const ProfileContext = createContext(null);
 
@@ -23,28 +24,11 @@ export const ProfileProvider = ({ children }) => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
   
   const gunProfileService = new GunProfileService();
+  const { user, isAuthenticated, authReady } = useAuth();
 
-  // Wait for auth to be ready
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          // Create anonymous session for development
-          await supabase.auth.signInAnonymously();
-        }
-        setAuthReady(true);
-      } catch (error) {
-        console.error('Auth setup error:', error);
-        setAuthReady(true); // Continue anyway
-      }
-    };
-
-    checkAuth();
-  }, []);
+  // No need for custom auth checking - use AuthContext
 
   // Load profiles once auth is ready
   useEffect(() => {
@@ -56,9 +40,13 @@ export const ProfileProvider = ({ children }) => {
   // Create default .308 profile if no profiles exist
   useEffect(() => {
     const createDefaultProfile = async () => {
-      if (profiles.length === 0 && !loading && authReady) {
+      // Temporarily disabled to debug authentication issues
+      console.log('Default profile creation disabled for debugging');
+      return;
+      
+      if (profiles.length === 0 && !loading && authReady && isAuthenticated && user) {
         try {
-          console.log('Creating default .308 profile...');
+          console.log('Creating default .308 profile for user:', user.email);
           const defaultProfile = {
             name: 'Generic .308 Winchester',
             caliber: '.308 Winchester',
@@ -71,12 +59,13 @@ export const ProfileProvider = ({ children }) => {
           console.log('✅ Default .308 profile created');
         } catch (error) {
           console.error('Error creating default profile:', error);
+          // Don't show error dialog for now
         }
       }
     };
 
     createDefaultProfile();
-  }, [profiles.length, loading, authReady]);
+  }, [profiles.length, loading, authReady, isAuthenticated, user]);
 
   const loadProfiles = async () => {
     try {

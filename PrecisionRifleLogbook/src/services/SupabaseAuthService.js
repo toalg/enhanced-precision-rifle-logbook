@@ -156,6 +156,43 @@ class SupabaseAuthService {
     return results;
   }
 
+  // Clear all authentication data (for development/testing)
+  async clearAllAuthData() {
+    try {
+      console.log('🧹 Clearing all authentication data...');
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Clear any local storage
+      if (__DEV__) {
+        try {
+          // Clear AsyncStorage for React Native
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          await AsyncStorage.multiRemove([
+            'supabase.auth.token',
+            'supabase.auth.refreshToken',
+            'user_session',
+            'auth_user'
+          ]);
+          console.log('✅ Local storage cleared');
+        } catch (storageError) {
+          console.log('⚠️ Could not clear local storage:', storageError.message);
+        }
+      }
+      
+      // Reset auth state
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      
+      console.log('✅ All authentication data cleared');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error clearing auth data:', error);
+      return { success: false, error };
+    }
+  }
+
   // Check if auth is available
   isAuthAvailable() {
     return this.isInitialized;

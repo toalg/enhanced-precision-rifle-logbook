@@ -100,6 +100,24 @@ const TestBackendScreen = () => {
     }
   };
 
+  const handleClearAuthData = async () => {
+    setLoading(true);
+    try {
+      const result = await SupabaseAuthService.clearAllAuthData();
+      if (result.success) {
+        Alert.alert('Success', 'All authentication data cleared');
+        // Refresh tests after clearing
+        setTimeout(() => runTests(), 1000);
+      } else {
+        Alert.alert('Error', result.error || 'Failed to clear auth data');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderTestResult = (serviceName, result) => (
     <Card style={styles.testCard}>
       <Text style={styles.serviceTitle}>{serviceName}</Text>
@@ -176,6 +194,17 @@ const TestBackendScreen = () => {
               title="Sign Out"
               onPress={handleSignOut}
               variant="error"
+              size="small"
+              style={styles.devButton}
+              disabled={loading}
+            />
+          </View>
+          
+          <View style={styles.buttonRow}>
+            <Button
+              title="Clear All Auth Data"
+              onPress={handleClearAuthData}
+              variant="warning"
               size="small"
               style={styles.devButton}
               disabled={loading}

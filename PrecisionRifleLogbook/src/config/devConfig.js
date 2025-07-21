@@ -16,12 +16,12 @@ export const DevConfig = {
     
     // Skip authentication entirely (useful for UI testing)
     // Set to true to bypass all authentication
-    bypassAuth: false,
+    bypassAuth: false, // Now testing real authentication
     
     // Mock user data when bypassing auth
     mockUser: {
       id: 'dev-user-123',
-      email: 'developer@test.com',
+      email: 'developer@gmail.com',
       displayName: 'Developer Test User',
       isPremium: true
     }
@@ -30,17 +30,17 @@ export const DevConfig = {
   // Test Users (will be created automatically)
   testUsers: {
     developer: {
-      email: 'developer@test.com',
+      email: 'developer@gmail.com', // Using gmail.com domain
       password: 'testpass123',
       displayName: 'Developer Test User'
     },
     shooter: {
-      email: 'shooter@test.com', 
+      email: 'shooter@gmail.com', // Using gmail.com domain
       password: 'testpass123',
       displayName: 'Precision Shooter'
     },
     premium: {
-      email: 'premium@test.com',
+      email: 'premium@gmail.com', // Using gmail.com domain
       password: 'testpass123', 
       displayName: 'Premium User'
     }
