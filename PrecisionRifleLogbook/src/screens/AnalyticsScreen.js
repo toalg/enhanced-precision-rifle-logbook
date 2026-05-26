@@ -21,6 +21,8 @@ import Card from '../components/common/Card';
 
 import LogbookService from '../services/LogbookService';
 import SessionAnalytics from '../components/SessionAnalytics';
+import GroupSizeCalculator from '../components/GroupSizeCalculator';
+import UnifiedGroupAnalysis from '../components/UnifiedGroupAnalysis';
 
 const { width } = Dimensions.get('window');
 
@@ -31,7 +33,10 @@ const AnalyticsScreen = () => {
   const [selectedTest, setSelectedTest] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' or 'premium'
+  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions', 'groups', or 'premium'
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedLadderTest, setSelectedLadderTest] = useState(null);
+  const [groupAnalysisType, setGroupAnalysisType] = useState(null); // 'session' or 'ladder'
 
   useEffect(() => {
     initializeScreen();
@@ -322,6 +327,14 @@ const AnalyticsScreen = () => {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
+        style={[styles.tab, activeTab === 'groups' && styles.activeTab]}
+        onPress={() => setActiveTab('groups')}
+      >
+        <Text style={[styles.tabText, activeTab === 'groups' && styles.activeTabText]}>
+          🎯 Group Analysis
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         style={[styles.tab, activeTab === 'premium' && styles.activeTab]}
         onPress={() => setActiveTab('premium')}
       >
@@ -335,6 +348,178 @@ const AnalyticsScreen = () => {
   const renderSessionAnalytics = () => (
     <SessionAnalytics sessions={sessions} />
   );
+
+  const renderGroupAnalysis = () => {
+    // Find sessions with shot data
+    const sessionsWithShots = sessions.filter(session => 
+      session.shots && session.shots.length >= 2
+    );
+
+    // Find ladder tests with velocity data
+    const ladderTestsWithData = ladderTests.filter(test => 
+      test.charges && test.charges.some(charge => 
+        charge.velocities && charge.velocities.length >= 2
+      )
+    );
+
+    const hasSessionData = sessionsWithShots.length > 0;
+    const hasLadderData = ladderTestsWithData.length > 0;
+
+    if (!hasSessionData && !hasLadderData) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No data available for group analysis</Text>
+          <Text style={styles.emptySubtext}>
+            Record shooting sessions with elevation/windage data or ladder tests with velocity data
+          </Text>
+        </View>
+      );
+    }
+
+    // If we have a selected data type, show the analysis
+    if (groupAnalysisType && selectedSession) {
+      return (
+        <View style={styles.container}>
+          <Card style={styles.selectedSessionCard}>
+            <View style={styles.selectedSessionHeader}>
+              <Text style={styles.selectedSessionTitle}>
+                {selectedSession.getFormattedDate()} - {selectedSession.rifleProfile}
+              </Text>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => {
+                  setSelectedSession(null);
+                  setGroupAnalysisType(null);
+                }}
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.selectedSessionSubtext}>
+              {selectedSession.shots.length} shots at {selectedSession.rangeDistance} yards
+            </Text>
+          </Card>
+          
+          <UnifiedGroupAnalysis 
+            data={selectedSession}
+            dataType="session"
+            targetDistance={selectedSession.rangeDistance || 100}
+          />
+        </View>
+      );
+    }
+
+    if (groupAnalysisType && selectedLadderTest) {
+      return (
+        <View style={styles.container}>
+          <Card style={styles.selectedSessionCard}>
+            <View style={styles.selectedSessionHeader}>
+              <Text style={styles.selectedSessionTitle}>
+                {selectedLadderTest.getFormattedDate()} - {selectedLadderTest.rifle}
+              </Text>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => {
+                  setSelectedLadderTest(null);
+                  setGroupAnalysisType(null);
+                }}
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.selectedSessionSubtext}>
+              {selectedLadderTest.charges.length} charges tested
+            </Text>
+          </Card>
+          
+          <UnifiedGroupAnalysis 
+            data={selectedLadderTest}
+            dataType="ladder"
+            targetDistance={selectedLadderTest.distance || 100}
+          />
+        </View>
+      );
+    }
+
+    // Show data type selection
+    return (
+      <View style={styles.container}>
+        <Card style={styles.selectorCard}>
+          <Text style={styles.selectorTitle}>Select Data Type for Group Analysis:</Text>
+          
+          {hasSessionData && (
+            <TouchableOpacity
+              style={styles.dataTypeButton}
+              onPress={() => setGroupAnalysisType('session')}
+            >
+              <Text style={styles.dataTypeButtonText}>📊 Shooting Sessions</Text>
+              <Text style={styles.dataTypeButtonSubtext}>
+                {sessionsWithShots.length} sessions with shot data
+              </Text>
+            </TouchableOpacity>
+          )}
+          
+          {hasLadderData && (
+            <TouchableOpacity
+              style={styles.dataTypeButton}
+              onPress={() => setGroupAnalysisType('ladder')}
+            >
+              <Text style={styles.dataTypeButtonText}>📈 Ladder Tests</Text>
+              <Text style={styles.dataTypeButtonSubtext}>
+                {ladderTestsWithData.length} tests with velocity data
+              </Text>
+            </TouchableOpacity>
+          )}
+        </Card>
+
+        {/* Show session selection if session type is selected */}
+        {groupAnalysisType === 'session' && (
+          <Card style={styles.selectorCard}>
+            <Text style={styles.selectorTitle}>Select Session:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {sessionsWithShots.map((session, index) => (
+                <TouchableOpacity
+                  key={session.id}
+                  style={styles.sessionButton}
+                  onPress={() => setSelectedSession(session)}
+                >
+                  <Text style={styles.sessionButtonText}>
+                    {session.getFormattedDate()}
+                  </Text>
+                  <Text style={styles.sessionButtonSubtext}>
+                    {session.shots.length} shots
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Card>
+        )}
+
+        {/* Show ladder test selection if ladder type is selected */}
+        {groupAnalysisType === 'ladder' && (
+          <Card style={styles.selectorCard}>
+            <Text style={styles.selectorTitle}>Select Ladder Test:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {ladderTestsWithData.map((test, index) => (
+                <TouchableOpacity
+                  key={test.id}
+                  style={styles.sessionButton}
+                  onPress={() => setSelectedLadderTest(test)}
+                >
+                  <Text style={styles.sessionButtonText}>
+                    {test.getFormattedDate()}
+                  </Text>
+                  <Text style={styles.sessionButtonSubtext}>
+                    {test.charges.length} charges
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Card>
+        )}
+      </View>
+    );
+  };
 
   const renderFreeTier = () => (
     <View style={styles.upgradeContainer}>
@@ -393,6 +578,7 @@ const AnalyticsScreen = () => {
       <View style={CommonStyles.contentContainer}>
         {renderTabSelector()}
         {activeTab === 'sessions' ? renderSessionAnalytics() : 
+         activeTab === 'groups' ? renderGroupAnalysis() :
          (isPremium ? renderPremiumFeatures() : renderFreeTier())}
       </View>
     </View>
@@ -516,21 +702,17 @@ const styles = StyleSheet.create({
   },
   
   analysisNote: {
+    ...CommonStyles.statusInfo,
     ...Typography.bodySmall,
     fontStyle: 'italic',
     marginTop: Spacing.md,
-    padding: Spacing.md,
-    backgroundColor: 'rgba(4, 102, 200, 0.1)',
-    borderRadius: 8,
   },
   
   flatSpotItem: {
+    ...CommonStyles.statusSuccess,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(39, 174, 96, 0.1)',
-    padding: Spacing.md,
-    borderRadius: 8,
     marginBottom: Spacing.sm,
   },
   
@@ -565,7 +747,7 @@ const styles = StyleSheet.create({
   statItem: {
     width: '48%',
     alignItems: 'center',
-    backgroundColor: 'rgba(4, 102, 200, 0.1)',
+    ...CommonStyles.statusInfo,
     padding: Spacing.md,
     borderRadius: 8,
     marginBottom: Spacing.sm,
@@ -584,7 +766,7 @@ const styles = StyleSheet.create({
   },
   
   bestChargeSection: {
-    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+    ...CommonStyles.statusSuccess,
     padding: Spacing.lg,
     borderRadius: 12,
     borderLeftWidth: 4,
@@ -603,7 +785,7 @@ const styles = StyleSheet.create({
   },
   
   safetyWarning: {
-    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    ...CommonStyles.statusError,
     borderWidth: 2,
     borderColor: Colors.error,
     borderRadius: 8,
@@ -634,7 +816,7 @@ const styles = StyleSheet.create({
   },
   
   referencesSection: {
-    backgroundColor: 'rgba(241, 196, 15, 0.1)',
+    ...CommonStyles.statusWarning,
     padding: Spacing.lg,
     borderRadius: 8,
   },
@@ -736,6 +918,103 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.white,
     marginTop: Spacing.md,
+  },
+  
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  
+  emptyText: {
+    ...Typography.h3,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  
+  emptySubtext: {
+    ...Typography.body,
+    textAlign: 'center',
+    color: Colors.gray,
+  },
+  
+  sessionButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginRight: Spacing.sm,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  
+  sessionButtonText: {
+    ...Typography.body,
+    color: Colors.white,
+    fontWeight: '600',
+  },
+  
+  sessionButtonSubtext: {
+    ...Typography.caption,
+    color: Colors.white,
+    opacity: 0.8,
+  },
+  
+  selectedSessionCard: {
+    marginBottom: Spacing.lg,
+  },
+  
+  selectedSessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  
+  selectedSessionTitle: {
+    ...Typography.h4,
+    color: Colors.primaryDeep,
+    flex: 1,
+  },
+  
+  backButton: {
+    backgroundColor: Colors.grayDeep,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+  },
+  
+  backButtonText: {
+    ...Typography.body,
+    color: Colors.white,
+    fontWeight: '500',
+  },
+  
+  selectedSessionSubtext: {
+    ...Typography.bodySmall,
+    color: Colors.grayDeep,
+  },
+  
+  dataTypeButton: {
+    backgroundColor: Colors.primary,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    alignItems: 'center',
+  },
+  
+  dataTypeButtonText: {
+    ...Typography.h4,
+    color: Colors.white,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  
+  dataTypeButtonSubtext: {
+    ...Typography.bodySmall,
+    color: Colors.white,
+    opacity: 0.8,
   },
 });
 
