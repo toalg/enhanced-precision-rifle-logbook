@@ -430,6 +430,32 @@ class LogbookService {
     }
   }
 
+  // Ballistic Unit Preferences
+  async getBallisticUnit() {
+    try {
+      await this.initialize();
+      return await DatabaseService.getSetting('ballistic_unit', 'MOA');
+    } catch (error) {
+      console.error('Error getting ballistic unit:', error);
+      return 'MOA'; // Default fallback
+    }
+  }
+
+  async setBallisticUnit(unit) {
+    try {
+      await this.initialize();
+      if (unit !== 'MOA' && unit !== 'Mils') {
+        throw new Error('Invalid ballistic unit. Must be either "MOA" or "Mils"');
+      }
+      await DatabaseService.setSetting('ballistic_unit', unit);
+      this.emit('ballisticUnitChanged', { unit });
+      return true;
+    } catch (error) {
+      console.error('Error setting ballistic unit:', error);
+      throw error;
+    }
+  }
+
   // Cleanup
   async cleanup() {
     await DatabaseService.close();

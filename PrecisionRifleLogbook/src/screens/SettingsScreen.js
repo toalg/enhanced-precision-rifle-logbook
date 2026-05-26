@@ -32,6 +32,7 @@ const SettingsScreen = () => {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [activeSection, setActiveSection] = useState('main'); // 'main' or 'profiles'
+  const [ballisticUnit, setBallisticUnit] = useState('MOA'); // 'MOA' or 'Mils'
 
   // Get profile context
   const { profiles, selectedProfile } = useProfiles();
@@ -64,17 +65,19 @@ const SettingsScreen = () => {
     try {
       setLoading(true);
       
-      const [premium, cloudSync, sessions, ladders] = await Promise.all([
+      const [premium, cloudSync, sessions, ladders, unit] = await Promise.all([
         LogbookService.checkPremiumStatus(),
         LogbookService.getCloudSyncSetting(),
         LogbookService.getShootingSessions(1000, 0),
         LogbookService.getLadderTests(100, 0),
+        LogbookService.getBallisticUnit(), // Get saved unit preference
       ]);
       
       setIsPremium(premium);
       setCloudSyncEnabled(cloudSync);
       setSessionCount(sessions.length);
       setLadderCount(ladders.length);
+      setBallisticUnit(unit || 'MOA'); // Default to MOA if not set
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
@@ -125,6 +128,20 @@ const SettingsScreen = () => {
       }
     } catch (error) {
       Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleBallisticUnitChange = async (newUnit) => {
+    try {
+      await LogbookService.setBallisticUnit(newUnit);
+      setBallisticUnit(newUnit);
+      
+      Alert.alert(
+        'Unit Preference Updated',
+        `Ballistic calculations will now use ${newUnit} for elevation and windage adjustments.`
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update unit preference');
     }
   };
 
@@ -301,6 +318,41 @@ const SettingsScreen = () => {
     </Card>
   );
 
+  const renderBallisticUnitsCard = () => (
+    <Card variant="dark">
+      <Text style={styles.sectionTitle}>🎯 Ballistic Unit Preferences</Text>
+      <View style={styles.contentContainer}>
+        <Text style={styles.statusText}>
+          Current Unit: {ballisticUnit}
+        </Text>
+        <Text style={styles.sectionDescription}>
+          Choose your preferred unit for elevation and windage adjustments. This affects all ballistic calculations and data displays.
+        </Text>
+      </View>
+      
+      <View style={styles.buttonRow}>
+        <Button
+          title="MOA"
+          onPress={() => handleBallisticUnitChange('MOA')}
+          variant={ballisticUnit === 'MOA' ? 'primary' : 'secondary'}
+          style={styles.halfWidthButton}
+          size="medium"
+        />
+        <Button
+          title="Mils"
+          onPress={() => handleBallisticUnitChange('Mils')}
+          variant={ballisticUnit === 'Mils' ? 'primary' : 'secondary'}
+          style={styles.halfWidthButton}
+          size="medium"
+        />
+      </View>
+      
+      <Text style={styles.securityNote}>
+        <Text style={styles.bold}>Note:</Text> Existing data will be converted to display in the selected unit
+      </Text>
+    </Card>
+  );
+
   const renderDataManagementCard = () => (
     <Card variant="dark">
       <Text style={styles.sectionTitle}>💾 Data Management</Text>
@@ -373,7 +425,7 @@ const SettingsScreen = () => {
   );
 
   const renderAccountCard = () => (
-    <Card variant="primary">
+    <Card variant="dark">
       <Text style={styles.sectionTitle}>👤 Account</Text>
       
       <View style={styles.aboutInfo}>
@@ -453,6 +505,7 @@ const SettingsScreen = () => {
     <>
       {renderAccountCard()}
       {renderGunProfilesCard()}
+      {renderBallisticUnitsCard()}
       {renderPremiumStatusCard()}
       {renderCloudSyncCard()}
       {renderDataManagementCard()}
@@ -643,7 +696,7 @@ const styles = StyleSheet.create({
 
   infoItem: {
     ...Typography.bodySmall,
-    color: Colors.grayDark,
+    color: Colors.gray,
     marginBottom: Spacing.xs,
   },
 

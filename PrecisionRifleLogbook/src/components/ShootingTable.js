@@ -15,6 +15,7 @@ import {
   Alert,
 } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from './common/AppStyles';
+import { useBallisticUnit } from '../hooks/useBallisticUnit';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +29,9 @@ const ShootingTable = ({
   const [shots, setShots] = useState([]);
   const [isLandscape, setIsLandscape] = useState(width > height);
   const [editedShots, setEditedShots] = useState(new Set());
+  
+  // Get user's ballistic unit preference
+  const { ballisticUnit } = useBallisticUnit();
 
   useEffect(() => {
     // Initialize with one empty shot
@@ -136,23 +140,37 @@ const ShootingTable = ({
 
   const renderTableHeader = () => (
     <View style={[styles.tableRow, styles.tableHeader, isLandscape && styles.landscapeHeader]}>
-      <Text style={styles.headerCell}>#</Text>
-      <Text style={styles.headerCell}>Target Distance</Text>
-      <Text style={styles.headerCell}>Measured Velocity</Text>
-      <Text style={styles.headerCell}>Projected Elevation</Text>
-      <Text style={styles.headerCell}>Projected Wind</Text>
-      <Text style={styles.headerCell}>Actual Elevation</Text>
-      <Text style={styles.headerCell}>Actual Wind</Text>
-      <Text style={styles.headerCell}>Actions</Text>
+      <Text style={[styles.headerCell, styles.numberColumn]}>#</Text>
+      <Text style={[styles.headerCell, styles.distanceColumn]}>
+        {isLandscape ? 'Target Distance' : 'Dist'}
+      </Text>
+      <Text style={[styles.headerCell, styles.velocityColumn]}>
+        {isLandscape ? 'Measured Velocity' : 'Vel'}
+      </Text>
+      <Text style={[styles.headerCell, styles.elevationColumn]}>
+        {isLandscape ? 'Projected Elevation' : 'Proj Elev'}
+      </Text>
+      <Text style={[styles.headerCell, styles.windColumn]}>
+        {isLandscape ? 'Projected Wind' : 'Proj Wind'}
+      </Text>
+      <Text style={[styles.headerCell, styles.elevationColumn]}>
+        {isLandscape ? 'Actual Elevation' : 'Act Elev'}
+      </Text>
+      <Text style={[styles.headerCell, styles.windColumn]}>
+        {isLandscape ? 'Actual Wind' : 'Act Wind'}
+      </Text>
+      <Text style={[styles.headerCell, styles.actionColumn]}>
+        {isLandscape ? 'Actions' : '⚙️'}
+      </Text>
     </View>
   );
 
   const renderShotRow = (shot, index) => (
     <View key={shot.id} style={[styles.tableRow, isLandscape && styles.landscapeRow]}>
-      <Text style={styles.cellNumber}>{shot.roundNumber}</Text>
+      <Text style={[styles.cellNumber, styles.numberColumn]}>{shot.roundNumber}</Text>
       
       <TextInput
-        style={[styles.cellInput, styles.cellDistance]}
+        style={[styles.cellInput, styles.cellDistance, styles.distanceColumn]}
         value={shot.targetDistance.toString()}
         onChangeText={(value) => updateShot(shot.id, 'targetDistance', value)}
         placeholder={sessionData.rangeDistance?.toString() || '100'}
@@ -160,7 +178,7 @@ const ShootingTable = ({
       />
       
       <TextInput
-        style={styles.cellInput}
+        style={[styles.cellInput, styles.velocityColumn]}
         value={shot.measuredVelocity}
         onChangeText={(value) => updateShot(shot.id, 'measuredVelocity', value)}
         placeholder="fps"
@@ -168,38 +186,38 @@ const ShootingTable = ({
       />
       
       <TextInput
-        style={styles.cellInput}
+        style={[styles.cellInput, styles.elevationColumn]}
         value={shot.projectedElevation}
         onChangeText={(value) => updateShot(shot.id, 'projectedElevation', value)}
-        placeholder="MOA"
+        placeholder={ballisticUnit}
         keyboardType="numeric"
       />
       
       <TextInput
-        style={styles.cellInput}
+        style={[styles.cellInput, styles.windColumn]}
         value={shot.projectedWind}
         onChangeText={(value) => updateShot(shot.id, 'projectedWind', value)}
-        placeholder="MOA"
+        placeholder={ballisticUnit}
         keyboardType="numeric"
       />
       
       <TextInput
-        style={styles.cellInput}
+        style={[styles.cellInput, styles.elevationColumn]}
         value={shot.actualElevation}
         onChangeText={(value) => updateShot(shot.id, 'actualElevation', value)}
-        placeholder="MOA"
+        placeholder={ballisticUnit}
         keyboardType="numeric"
       />
       
       <TextInput
-        style={styles.cellInput}
+        style={[styles.cellInput, styles.windColumn]}
         value={shot.actualWind}
         onChangeText={(value) => updateShot(shot.id, 'actualWind', value)}
-        placeholder="MOA"
+        placeholder={ballisticUnit}
         keyboardType="numeric"
       />
       
-      <View style={styles.actionCell}>
+      <View style={[styles.actionCell, styles.actionColumn]}>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => deleteShot(shot.id)}
@@ -318,7 +336,43 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     textAlign: 'center',
     flex: 1,
-    minWidth: 80,
+  },
+
+  // Responsive column widths
+  numberColumn: {
+    flex: 0.4,
+    minWidth: 30,
+    maxWidth: 40,
+  },
+
+  distanceColumn: {
+    flex: 0.8,
+    minWidth: 60,
+    maxWidth: 80,
+  },
+
+  velocityColumn: {
+    flex: 0.8,
+    minWidth: 50,
+    maxWidth: 70,
+  },
+
+  elevationColumn: {
+    flex: 1,
+    minWidth: 60,
+    maxWidth: 90,
+  },
+
+  windColumn: {
+    flex: 1,
+    minWidth: 60,
+    maxWidth: 90,
+  },
+
+  actionColumn: {
+    flex: 0.4,
+    minWidth: 35,
+    maxWidth: 50,
   },
   
   tableBody: {
@@ -349,18 +403,16 @@ const styles = StyleSheet.create({
     ...Typography.body,
     padding: Spacing.sm,
     textAlign: 'center',
-    flex: 0.5,
-    minWidth: 40,
     fontWeight: 'bold',
+    fontSize: 12,
   },
   
   cellInput: {
     flex: 1,
     padding: Spacing.sm,
     borderWidth: 0,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    minWidth: 80,
     color: Colors.gray,
   },
   
@@ -370,15 +422,14 @@ const styles = StyleSheet.create({
   },
   
   actionCell: {
-    flex: 0.5,
-    minWidth: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   
   deleteButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: Colors.error,
     alignItems: 'center',
     justifyContent: 'center',
@@ -386,7 +437,7 @@ const styles = StyleSheet.create({
   
   deleteButtonText: {
     color: Colors.white,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   

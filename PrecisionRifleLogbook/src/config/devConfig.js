@@ -9,7 +9,7 @@ export const DevConfig = {
   auth: {
     // Auto-login with test user on app start
     // Set to false if you want to test manual login
-    autoLogin: true,
+    autoLogin: false,
     
     // Which test user to auto-login with
     defaultTestUser: 'developer', // 'developer', 'shooter', 'premium'

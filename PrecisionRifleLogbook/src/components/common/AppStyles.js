@@ -42,7 +42,7 @@ export const Colors = {
   inputBackground: 'rgba(255, 255, 255, 0.9)',
 };
 
-// Typography
+// Typography - Optimized for dark theme readability
 export const Typography = {
   h1: {
     fontSize: 32,
@@ -52,39 +52,39 @@ export const Typography = {
   h2: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.black,
+    color: Colors.white,
   },
   h3: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.black,
+    color: Colors.white,
   },
   h4: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.black,
+    color: Colors.white,
   },
   body: {
     fontSize: 16,
     fontWeight: '400',
-    color: Colors.black,
+    color: Colors.white,
     lineHeight: 24,
   },
   bodySmall: {
     fontSize: 14,
     fontWeight: '400',
-    color: Colors.grayDeep,
+    color: Colors.gray,
     lineHeight: 20,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.primaryDeep,
+    color: Colors.primary,
   },
   caption: {
     fontSize: 12,
     fontWeight: '400',
-    color: Colors.grayDark,
+    color: Colors.gray,
   },
 };
 

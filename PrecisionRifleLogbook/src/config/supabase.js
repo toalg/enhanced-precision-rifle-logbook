@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { createSafeFetch, createSafeWebSocket } from '../utils/RealtimeClientPatch';
+import { createSafeFetch, createSafeWebSocket } from '../utils/RealtimeClientPatch.js';
 
 // Your Supabase project configuration
 // Get these values from your Supabase Dashboard

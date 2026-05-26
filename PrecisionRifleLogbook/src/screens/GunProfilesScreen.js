@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CommonStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
+import { CommonStyles, Colors, Typography, Spacing, BorderRadius, Shadows } from '../components/common/AppStyles';
 import CleaningProgressBar from '../components/profiles/CleaningProgressBar';
 import { useProfiles } from '../context/ProfileContext';
 import { GunProfileService } from '../services/GunProfileService';
@@ -224,7 +224,7 @@ const GunProfilesScreen = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0466C8" />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading rifle profiles...</Text>
       </View>
     );
@@ -272,7 +272,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={styles.modalInput}
               placeholder="Rifle Name (e.g., Remington 700)"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.name}
               onChangeText={(text) => setNewProfile({...newProfile, name: text})}
             />
@@ -280,7 +280,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={styles.modalInput}
               placeholder="Caliber (e.g., .308 Winchester)"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.caliber}
               onChangeText={(text) => setNewProfile({...newProfile, caliber: text})}
             />
@@ -288,7 +288,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={styles.modalInput}
               placeholder="Model (e.g., 700 SPS)"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.model}
               onChangeText={(text) => setNewProfile({...newProfile, model: text})}
             />
@@ -296,7 +296,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={styles.modalInput}
               placeholder="Purchase Date (e.g., 2023-01-01)"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.purchase_date}
               onChangeText={(text) => setNewProfile({...newProfile, purchase_date: text})}
             />
@@ -304,7 +304,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={styles.modalInput}
               placeholder="Cleaning Interval (e.g., 200 rounds) - Optional"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.cleaning_interval}
               onChangeText={(text) => setNewProfile({...newProfile, cleaning_interval: text})}
               keyboardType="numeric"
@@ -313,7 +313,7 @@ const GunProfilesScreen = () => {
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
               placeholder="Notes (optional)"
-              placeholderTextColor="#7D8597"
+              placeholderTextColor={Colors.grayDark}
               value={newProfile.notes}
               onChangeText={(text) => setNewProfile({...newProfile, notes: text})}
               multiline
@@ -345,82 +345,68 @@ const GunProfilesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#001233',
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#33415C',
+    padding: Spacing.lg,
+    backgroundColor: Colors.grayDarkest,
     borderBottomWidth: 1,
-    borderBottomColor: '#4A5568',
+    borderBottomColor: Colors.grayDeep,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    ...Typography.h1,
+    marginBottom: Spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#E9ECEF',
-    lineHeight: 22,
+    ...Typography.body,
+    color: Colors.grayDark,
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#001233',
+    ...CommonStyles.loadingContainer,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#E9ECEF',
+    ...Typography.body,
+    color: Colors.grayDark,
+    marginTop: Spacing.md,
   },
   emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
+    ...CommonStyles.emptyState,
   },
   emptyStateIcon: {
     fontSize: 64,
     marginBottom: 16,
   },
   emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    ...Typography.h2,
+    color: Colors.white,
+    marginBottom: Spacing.sm,
   },
   emptyStateText: {
-    fontSize: 16,
-    color: '#E9ECEF',
+    ...Typography.body,
+    color: Colors.grayDark,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: Spacing.lg,
   },
   addButton: {
-    backgroundColor: '#0466C8',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    ...CommonStyles.buttonPrimary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...CommonStyles.buttonText,
   },
   profilesContainer: {
     padding: 16,
   },
   profileCard: {
-    backgroundColor: '#33415C',
+    backgroundColor: Colors.grayDarkest,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.background,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -435,7 +421,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: Colors.white,
     flex: 1,
   },
   profileActions: {
@@ -450,10 +436,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cleanButton: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: Colors.success,
   },
   deleteButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: Colors.error,
   },
   actionButtonText: {
     fontSize: 16,
@@ -464,12 +450,12 @@ const styles = StyleSheet.create({
   profileCaliber: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0466C8',
+    color: Colors.primary,
     marginBottom: 4,
   },
   profileModel: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.white,
     fontWeight: '500',
     marginBottom: 2,
   },
@@ -480,7 +466,7 @@ const styles = StyleSheet.create({
   },
   roundsLabel: {
     fontSize: 14,
-    color: '#E9ECEF',
+    color: Colors.grayDark,
     fontWeight: '500',
   },
   cleaningSection: {
@@ -494,17 +480,17 @@ const styles = StyleSheet.create({
   },
   cleaningLabel: {
     fontSize: 14,
-    color: '#E9ECEF',
+    color: Colors.grayDark,
     fontWeight: '500',
   },
   cleaningWarning: {
     fontSize: 12,
-    color: '#FF6B6B',
+    color: Colors.error,
     fontWeight: '600',
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#001233',
+    backgroundColor: Colors.background,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
@@ -515,17 +501,17 @@ const styles = StyleSheet.create({
   },
   cleaningInterval: {
     fontSize: 12,
-    color: '#7D8597',
+    color: Colors.grayDark,
     fontStyle: 'italic',
   },
   noCleaningSchedule: {
     fontSize: 12,
-    color: '#FF6B6B',
+    color: Colors.error,
     fontStyle: 'italic',
   },
   profileNotes: {
     fontSize: 14,
-    color: '#7D8597',
+    color: Colors.grayDark,
     fontStyle: 'italic',
     marginTop: 8,
   },
@@ -535,7 +521,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#7D8597',
+    color: Colors.grayDark,
   },
 
   // Modal styles
@@ -547,12 +533,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#33415C',
+    backgroundColor: Colors.grayDarkest,
     borderRadius: 16,
     padding: 24,
     width: '100%',
     maxWidth: 400,
-    shadowColor: '#000',
+    shadowColor: Colors.background,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -561,19 +547,19 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: Colors.white,
     marginBottom: 20,
     textAlign: 'center',
   },
   modalInput: {
-    backgroundColor: '#001233',
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: '#4A5568',
+    borderColor: Colors.grayDeep,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.white,
     marginBottom: 16,
   },
   modalTextArea: {
@@ -599,15 +585,15 @@ const styles = StyleSheet.create({
     borderColor: '#7D8597',
   },
   modalButtonCancelText: {
-    color: '#7D8597',
+    color: Colors.grayDark,
     fontSize: 16,
     fontWeight: '600',
   },
   modalButtonSave: {
-    backgroundColor: '#0466C8',
+    backgroundColor: Colors.primary,
   },
   modalButtonSaveText: {
-    color: '#FFFFFF',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: '600',
   },

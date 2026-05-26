@@ -8,9 +8,17 @@ export class LadderCharge {
     this.id = data.id || null;
     this.ladderTestId = data.ladderTestId || null;
     this.chargeWeight = data.chargeWeight || 0;
-    this.velocities = data.velocities || [null, null, null];
+    this.velocities = data.velocities || [null, null, null]; // Default to 3 shots
     this.notes = data.notes || '';
     this.pressureSigns = data.pressureSigns || '';
+  }
+
+  // Set the number of velocity slots
+  setShotCount(count) {
+    const newCount = Math.max(1, Math.min(10, count)); // Limit between 1-10 shots
+    if (this.velocities.length !== newCount) {
+      this.velocities = new Array(newCount).fill(null);
+    }
   }
 
   // Calculate statistics (migrated from rifle_logbook.html lines 1472-1497)
@@ -99,6 +107,7 @@ export class LadderTest {
     this.powder = data.powder || '';
     this.brass = data.brass || '';
     this.notes = data.notes || '';
+    this.shotsPerCharge = data.shotsPerCharge || 3; // Default to 3 shots per charge
     this.charges = (data.charges || []).map(charge => 
       charge instanceof LadderCharge ? charge : new LadderCharge(charge)
     );
@@ -287,6 +296,7 @@ export class LadderTest {
       powder: this.powder,
       brass: this.brass,
       notes: this.notes,
+      shotsPerCharge: this.shotsPerCharge,
       charges: this.charges.map(charge => charge.toJSON()),
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
@@ -312,9 +322,26 @@ export class LadderTest {
   }
 
   static createEmpty() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     return new LadderTest({
-      date: new Date().toISOString().split('T')[0]
+      date: localDate.toISOString().slice(0, 16) // Include time for consistency
     });
+  }
+
+  // Get user-friendly date format for display  
+  getDisplayDate() {
+    const date = new Date(this.date);
+    const options = {
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    return date.toLocaleDateString('en-US', options);
   }
 
   // Static validation for form data

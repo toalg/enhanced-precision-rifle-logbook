@@ -14,9 +14,10 @@ import {
   RefreshControl,
 } from 'react-native';
 
-import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
+import { CommonStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
 import Button from '../components/common/Button';
 import InputField from '../components/common/InputField';
+import DateTimeInput from '../components/common/DateTimeInput';
 import Card from '../components/common/Card';
 
 import LogbookService from '../services/LogbookService';
@@ -38,6 +39,7 @@ const LadderTestScreen = () => {
   const [startCharge, setStartCharge] = useState('42.0');
   const [endCharge, setEndCharge] = useState('44.0');
   const [chargeIncrement, setChargeIncrement] = useState('0.2');
+  const [shotsPerCharge, setShotsPerCharge] = useState('3');
 
   // Profile context
   const { selectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
@@ -84,6 +86,7 @@ const LadderTestScreen = () => {
     setStartCharge('42.0');
     setEndCharge('44.0');
     setChargeIncrement('0.2');
+    setShotsPerCharge('3');
   };
 
   const updateFormField = (field, value) => {
@@ -100,6 +103,7 @@ const LadderTestScreen = () => {
     const start = parseFloat(startCharge);
     const end = parseFloat(endCharge);
     const increment = parseFloat(chargeIncrement);
+    const shotCount = parseInt(shotsPerCharge);
 
     if (!start || !end || !increment) {
       Alert.alert('Error', 'Please fill in start charge, end charge, and increment');
@@ -111,18 +115,30 @@ const LadderTestScreen = () => {
       return;
     }
 
+    if (!shotCount || shotCount < 1 || shotCount > 10) {
+      Alert.alert('Error', 'Shots per charge must be between 1 and 10');
+      return;
+    }
+
     const generatedCharges = LadderTest.generateCharges(start, end, increment);
+    
+    // Set the shot count for each charge
+    generatedCharges.forEach(charge => {
+      charge.setShotCount(shotCount);
+    });
+
     setCharges(generatedCharges);
     
     // Update form data
     setFormData(prev => {
       const updated = prev.clone();
       updated.charges = generatedCharges;
+      updated.shotsPerCharge = shotCount;
       updated.touch();
       return updated;
     });
 
-    Alert.alert('Success', `Generated ${generatedCharges.length} charge weights`);
+    Alert.alert('Success', `Generated ${generatedCharges.length} charge weights with ${shotCount} shots each`);
   };
 
   const updateChargeVelocity = (chargeIndex, shotIndex, velocity) => {
@@ -130,14 +146,15 @@ const LadderTestScreen = () => {
       const updated = [...prev];
       const charge = updated[chargeIndex];
       charge.velocities[shotIndex] = velocity ? parseFloat(velocity) : null;
-      return updated;
-    });
 
-    // Update form data
-    setFormData(prev => {
-      const updated = prev.clone();
-      updated.charges = charges;
-      updated.touch();
+      // Update form data with the new charges
+      setFormData(formPrev => {
+        const formUpdated = formPrev.clone();
+        formUpdated.charges = updated;
+        formUpdated.touch();
+        return formUpdated;
+      });
+      
       return updated;
     });
   };
@@ -146,14 +163,15 @@ const LadderTestScreen = () => {
     setCharges(prev => {
       const updated = [...prev];
       updated[chargeIndex].notes = notes;
-      return updated;
-    });
-
-    // Update form data
-    setFormData(prev => {
-      const updated = prev.clone();
-      updated.charges = charges;
-      updated.touch();
+      
+      // Update form data with the new charges
+      setFormData(formPrev => {
+        const formUpdated = formPrev.clone();
+        formUpdated.charges = updated;
+        formUpdated.touch();
+        return formUpdated;
+      });
+      
       return updated;
     });
   };
@@ -233,7 +251,7 @@ const LadderTestScreen = () => {
 
   const renderChargeEntry = (charge, index) => {
     const stats = charge.getStatistics();
-    
+
     return (
       <Card key={index} variant="info" style={styles.chargeCard}>
         <View style={styles.chargeHeader}>
@@ -243,27 +261,16 @@ const LadderTestScreen = () => {
         
         <Text style={styles.velocityLabel}>Velocities (fps):</Text>
         <View style={styles.velocityRow}>
-          <InputField
-            placeholder="Shot 1"
-            value={charge.velocities[0]?.toString() || ''}
-            onChangeText={(value) => updateChargeVelocity(index, 0, value)}
-            keyboardType="numeric"
-            style={styles.velocityInput}
-          />
-          <InputField
-            placeholder="Shot 2"
-            value={charge.velocities[1]?.toString() || ''}
-            onChangeText={(value) => updateChargeVelocity(index, 1, value)}
-            keyboardType="numeric"
-            style={styles.velocityInput}
-          />
-          <InputField
-            placeholder="Shot 3"
-            value={charge.velocities[2]?.toString() || ''}
-            onChangeText={(value) => updateChargeVelocity(index, 2, value)}
-            keyboardType="numeric"
-            style={styles.velocityInput}
-          />
+          {charge.velocities.map((velocity, shotIndex) => (
+            <InputField
+              key={shotIndex}
+              placeholder={`Shot ${shotIndex + 1}`}
+              value={velocity?.toString() || ''}
+              onChangeText={(value) => updateChargeVelocity(index, shotIndex, value)}
+              keyboardType="numeric"
+              style={styles.velocityInput}
+            />
+          ))}
         </View>
         
         {stats.shotCount > 0 && (
@@ -336,11 +343,11 @@ const LadderTestScreen = () => {
         {/* Test Configuration */}
         <Text style={styles.sectionTitle}>Test Configuration</Text>
         
-        <InputField
+        <DateTimeInput
           label="Test Date"
           value={formData.date}
           onChangeText={(value) => updateFormField('date', value)}
-          placeholder="Select date"
+          placeholder="Select date and time"
           required
         />
         
@@ -419,6 +426,26 @@ const LadderTestScreen = () => {
                 placeholder="0.2"
                 keyboardType="numeric"
               />
+            </View>
+          </View>
+          
+          <View style={styles.generatorRow}>
+            <View style={styles.generatorInput}>
+              <InputField
+                label="Shots per Charge"
+                value={shotsPerCharge}
+                onChangeText={setShotsPerCharge}
+                placeholder="3"
+                keyboardType="numeric"
+              />
+            </View>
+            
+            <View style={styles.generatorInput}>
+              <Text style={styles.helpText}>
+                💡 Tip: 1 shot = faster testing{'\n'}
+                3-5 shots = better statistics{'\n'}
+                More shots = higher confidence
+              </Text>
             </View>
           </View>
           
@@ -629,19 +656,21 @@ const styles = StyleSheet.create({
   
   velocityRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
   
   velocityInput: {
     flex: 1,
+    minWidth: 80,
   },
   
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
-    backgroundColor: 'rgba(4, 102, 200, 0.1)',
+    ...CommonStyles.statusInfo,
     padding: Spacing.sm,
     borderRadius: 8,
   },
@@ -731,6 +760,17 @@ const styles = StyleSheet.create({
   profileField: {
     backgroundColor: Colors.grayLight,
     opacity: 0.8,
+  },
+
+  helpText: {
+    ...Typography.bodySmall,
+    color: Colors.grayDeep,
+    fontStyle: 'italic',
+    ...CommonStyles.statusInfo,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
   },
 });
 

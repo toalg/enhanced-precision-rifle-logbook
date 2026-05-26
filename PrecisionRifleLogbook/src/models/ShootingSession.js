@@ -267,9 +267,33 @@ export class ShootingSession {
   }
 
   static createEmpty() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
     return new ShootingSession({
-      date: new Date().toISOString().slice(0, 16), // Format for datetime-local input
+      date: localDate.toISOString().slice(0, 16), // Format for datetime-local input
     });
+  }
+
+  // Get user-friendly date format for display
+  getDisplayDate() {
+    const date = new Date(this.date);
+    const options = {
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  // Get date for input field (user-friendly format)
+  getInputDate() {
+    const date = new Date(this.date);
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   // Static validation for form data

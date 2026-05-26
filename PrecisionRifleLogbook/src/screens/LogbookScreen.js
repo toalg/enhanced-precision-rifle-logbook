@@ -12,11 +12,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 
-import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
+import { CommonStyles, Colors, Typography, Spacing, BorderRadius } from '../components/common/AppStyles';
 import Button from '../components/common/Button';
 import InputField from '../components/common/InputField';
+import DateTimeInput from '../components/common/DateTimeInput';
 import Card from '../components/common/Card';
 import ShootingTable from '../components/ShootingTable';
 
@@ -39,7 +41,7 @@ const LogbookScreen = () => {
   const [sessionData, setSessionData] = useState(null);
 
   // Profile context
-  const { selectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
+  const { profiles, selectedProfile, setSelectedProfile, requireProfileSelection, addRoundsToProfile, createProfile } = useProfiles();
 
   useEffect(() => {
     loadSessions();
@@ -156,6 +158,53 @@ const LogbookScreen = () => {
     }
   };
 
+  const handleProfileSelection = () => {
+    if (profiles.length === 0) {
+      Alert.alert(
+        'No Rifle Profiles',
+        'You need to create a rifle profile first. Would you like to create one now?',
+        [
+          {
+            text: 'Create Profile',
+            onPress: async () => {
+              try {
+                const defaultProfile = {
+                  name: 'My Rifle',
+                  caliber: '.308 Winchester',
+                  manufacturer: 'Custom',
+                  model: 'Custom Build',
+                  firearm_type: 'rifle',
+                  notes: 'Created for shooting session'
+                };
+                const newProfile = await createProfile(defaultProfile);
+                Alert.alert('Profile Created', `Profile "${newProfile.name}" has been created and selected.`);
+              } catch (error) {
+                Alert.alert('Error', 'Failed to create profile. Please try again.');
+              }
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Select Rifle Profile',
+      'Choose which rifle you\'re using for this session:',
+      [
+        ...profiles.map(profile => ({
+          text: profile.name,
+          onPress: () => setSelectedProfile(profile)
+        })),
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
+  };
+
   const handleEditSession = (session) => {
     // Load session data into form
     setFormData(ShootingSession.fromJSON(session));
@@ -173,7 +222,7 @@ const LogbookScreen = () => {
   const renderSessionItem = (session, index) => (
     <Card key={session.id} style={styles.sessionCard}>
       <View style={styles.sessionHeader}>
-        <Text style={styles.sessionDate}>{session.getFormattedDate()}</Text>
+        <Text style={styles.sessionDate}>{session.getDisplayDate()}</Text>
         <Text style={styles.sessionRifle}>{session.rifleProfile}</Text>
         <TouchableOpacity 
           style={styles.editButton}
@@ -240,7 +289,7 @@ const LogbookScreen = () => {
       {/* Basic Information */}
       <Text style={styles.sectionTitle}>Basic Information</Text>
       
-      <InputField
+      <DateTimeInput
         label="Date & Time"
         value={formData.date}
         onChangeText={(value) => updateFormField('date', value)}
@@ -248,15 +297,28 @@ const LogbookScreen = () => {
         required
       />
       
-      <InputField
-        label="Rifle Profile"
-        value={selectedProfile?.name || formData.rifleProfile}
-        onChangeText={(value) => updateFormField('rifleProfile', value)}
-        placeholder="e.g., Remington 700 .308"
-        editable={false}
-        style={styles.profileField}
-        required
-      />
+      <View style={styles.profileFieldContainer}>
+        <Text style={styles.profileLabel}>
+          Rifle Profile <Text style={styles.required}>*</Text>
+        </Text>
+        <TouchableOpacity 
+          style={styles.profileSelector}
+          onPress={handleProfileSelection}
+        >
+          <Text style={[
+            styles.profileSelectorText,
+            { color: selectedProfile ? Colors.white : Colors.grayDark }
+          ]}>
+            {selectedProfile?.name || 'Select a rifle profile...'}
+          </Text>
+          <Text style={styles.profileSelectorArrow}>▼</Text>
+        </TouchableOpacity>
+        {!selectedProfile && (
+          <Text style={styles.profileHelpText}>
+            Tap to select from your saved rifle profiles
+          </Text>
+        )}
+      </View>
       
 
       
@@ -611,6 +673,52 @@ const styles = StyleSheet.create({
   profileField: {
     backgroundColor: Colors.grayLight,
     opacity: 0.8,
+  },
+
+  profileFieldContainer: {
+    marginBottom: Spacing.lg,
+  },
+
+  profileLabel: {
+    ...Typography.label,
+    color: Colors.white,
+    marginBottom: Spacing.sm,
+  },
+
+  profileSelector: {
+    backgroundColor: Colors.grayDark,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 48,
+  },
+
+  profileSelectorText: {
+    ...Typography.body,
+    color: Colors.white,
+    flex: 1,
+  },
+
+  profileSelectorArrow: {
+    ...Typography.body,
+    color: Colors.primary,
+    fontSize: 12,
+  },
+
+  profileHelpText: {
+    ...Typography.caption,
+    color: Colors.grayDark,
+    marginTop: Spacing.sm,
+    fontStyle: 'italic',
+  },
+
+  required: {
+    color: Colors.warning,
   },
 });
 
