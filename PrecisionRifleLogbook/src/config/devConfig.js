@@ -1,133 +1,56 @@
 /**
  * Development Configuration
- * Easy-to-modify settings for development and testing
- * Only loaded in development builds (__DEV__)
+ * Only consumed under __DEV__ guards. Production builds dead-code-eliminate
+ * the false branches via Hermes minification when __DEV__ is replaced with `false`.
+ *
+ * Test users and their credentials have been removed - if you need a dev
+ * login, sign up through the app or use a real Supabase Auth account.
  */
 
 export const DevConfig = {
-  // Authentication Settings
+  // Authentication knobs (dev-only, never gate prod logic on these)
   auth: {
-    // Auto-login with test user on app start
-    // Set to false if you want to test manual login
-    autoLogin: false,
-    
-    // Which test user to auto-login with
-    defaultTestUser: 'developer', // 'developer', 'shooter', 'premium'
-    
-    // Skip authentication entirely (useful for UI testing)
-    // Set to true to bypass all authentication
-    bypassAuth: false, // Now testing real authentication
-    
-    // Mock user data when bypassing auth
+    // If true, the auth service skips Supabase and uses `mockUser` instead.
+    // Useful for offline UI work. Leave false unless you specifically need it.
+    bypassAuth: false,
+
+    // Mock user returned when bypassAuth is true. No real credentials here.
     mockUser: {
-      id: 'dev-user-123',
-      email: 'developer@gmail.com',
-      displayName: 'Developer Test User',
-      isPremium: true
-    }
-  },
-
-  // Test Users (will be created automatically)
-  testUsers: {
-    developer: {
-      email: 'developer@gmail.com', // Using gmail.com domain
-      password: 'testpass123',
-      displayName: 'Developer Test User'
+      id: 'dev-user-local',
+      email: 'dev@local',
+      displayName: 'Local Dev',
+      isPremium: true,
     },
-    shooter: {
-      email: 'shooter@gmail.com', // Using gmail.com domain
-      password: 'testpass123',
-      displayName: 'Precision Shooter'
-    },
-    premium: {
-      email: 'premium@gmail.com', // Using gmail.com domain
-      password: 'testpass123', 
-      displayName: 'Premium User'
-    }
   },
 
-  // Database Settings
-  database: {
-    // Use mock data instead of real Supabase
-    useMockData: false,
-    
-    // Auto-populate with sample data
-    autoPopulate: true,
-    
-    // Sample data settings
-    sampleData: {
-      shootingSessions: 5,
-      ladderTests: 3,
-      gunProfiles: 2
-    }
-  },
-
-  // UI/UX Settings
+  // UI knobs
   ui: {
-    // Show development indicators
     showDevIndicators: true,
-    
-    // Enable debug logging
     debugLogging: true,
-    
-    // Show performance metrics
-    showPerformanceMetrics: false
+    showPerformanceMetrics: false,
   },
-
-  // Feature Flags
-  features: {
-    // Enable premium features for testing
-    enablePremium: true,
-    
-    // Enable cloud sync for testing
-    enableCloudSync: true,
-    
-    // Enable advanced analytics
-    enableAdvancedAnalytics: true
-  }
 };
 
-// Helper functions for development
 export const DevUtils = {
-  // Check if we're in development mode
   isDevelopment: __DEV__,
-  
-  // Get current auth configuration
+
   getAuthConfig() {
     return DevConfig.auth;
   },
-  
-  // Get test users
-  getTestUsers() {
-    return DevConfig.testUsers;
-  },
-  
-  // Check if auth is bypassed
+
   isAuthBypassed() {
     return __DEV__ && DevConfig.auth.bypassAuth;
   },
-  
-  // Check if auto-login is enabled
-  isAutoLoginEnabled() {
-    return __DEV__ && DevConfig.auth.autoLogin;
-  },
-  
-  // Get default test user
-  getDefaultTestUser() {
-    return DevConfig.auth.defaultTestUser;
-  },
-  
-  // Log development info
+
   logDevInfo(message, data = null) {
     if (__DEV__ && DevConfig.ui.debugLogging) {
-      console.log(`🔧 [DEV] ${message}`, data || '');
+      console.warn(`🔧 [DEV] ${message}`, data || '');
     }
   },
-  
-  // Show development indicator
+
   showDevIndicator() {
     return __DEV__ && DevConfig.ui.showDevIndicators;
-  }
+  },
 };
 
-export default DevConfig; 
+export default DevConfig;

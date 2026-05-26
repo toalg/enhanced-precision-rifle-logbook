@@ -6,12 +6,10 @@
  */
 
 import { supabase } from '../config/supabase';
-import { DevConfig, DevUtils } from '../config/devConfig';
+import { DevConfig } from '../config/devConfig';
 
-// Development test users
-const DEV_TEST_USERS = DevConfig.testUsers;
-
-// Development configuration
+// Dev-only auth knobs. Production builds dead-code-eliminate the
+// __DEV__ branches that read this.
 const DEV_CONFIG = DevConfig.auth;
 
 class SupabaseAuthService {
@@ -44,16 +42,6 @@ class SupabaseAuthService {
         this.currentUser = session?.user || null;
       }
       
-      // Development mode: Auto-login with test user if no session
-      if (this.isDevelopment && DEV_CONFIG.autoLogin && !this.currentUser) {
-        console.log('🔧 Development mode: Auto-login with test user');
-        const autoLoginSuccess = await this.autoLoginWithTestUser();
-        if (!autoLoginSuccess) {
-          console.log('🔧 Auto-login failed, continuing without authentication');
-          // Continue without auto-login - user can manually sign in later
-        }
-      }
-      
       // Set up auth state listener
       this.authStateListener = supabase.auth.onAuthStateChange((event, session) => {
         console.log('Supabase auth state changed:', event, session?.user?.id);
@@ -67,93 +55,6 @@ class SupabaseAuthService {
       console.error('Supabase Auth Service initialization error:', error);
       return { success: false, error: error.message };
     }
-  }
-
-  // Development: Auto-login with test user
-  async autoLoginWithTestUser(userType = DEV_CONFIG.defaultTestUser) {
-    try {
-      const testUser = DEV_TEST_USERS[userType];
-      if (!testUser) {
-        console.warn(`Test user type '${userType}' not found`);
-        return false;
-      }
-      
-      console.log(`🔧 Auto-login with test user: ${testUser.email}`);
-      
-      // First try to sign in (user might already exist)
-      let result = await this.signInWithEmail(testUser.email, testUser.password);
-      
-      // If sign in fails, try to create the user
-      if (!result.success && result.error?.includes('Invalid login credentials')) {
-        console.log(`🔧 Test user doesn't exist, creating: ${testUser.email}`);
-        result = await this.signUpWithEmail(testUser.email, testUser.password, testUser.displayName);
-        
-        if (result.success) {
-          console.log(`🔧 Test user created successfully: ${testUser.email}`);
-          // Now try to sign in with the newly created user
-          result = await this.signInWithEmail(testUser.email, testUser.password);
-        }
-      }
-      
-      if (result.success) {
-        console.log(`🔧 Auto-login successful: ${testUser.email}`);
-        return true;
-      } else {
-        console.warn(`🔧 Auto-login failed: ${result.error}`);
-        return false;
-      }
-    } catch (error) {
-      console.error('Auto-login failed:', error);
-      return false;
-    }
-  }
-
-  // Development: Get available test users
-  getTestUsers() {
-    if (!this.isDevelopment) {
-      return {};
-    }
-    return DEV_TEST_USERS;
-  }
-
-  // Development: Quick login with test user
-  async quickLogin(userType = 'developer') {
-    if (!this.isDevelopment) {
-      throw new Error('Quick login only available in development mode');
-    }
-    
-    const testUser = DEV_TEST_USERS[userType];
-    if (!testUser) {
-      throw new Error(`Test user type '${userType}' not found`);
-    }
-    
-    return await this.signInWithEmail(testUser.email, testUser.password);
-  }
-
-  // Development: Create test users (for first-time setup)
-  async createTestUsers() {
-    if (!this.isDevelopment) {
-      throw new Error('Test user creation only available in development mode');
-    }
-    
-    console.log('🔧 Creating test users for development...');
-    const results = {};
-    
-    for (const [userType, userData] of Object.entries(DEV_TEST_USERS)) {
-      try {
-        const result = await this.signUpWithEmail(
-          userData.email, 
-          userData.password, 
-          userData.displayName
-        );
-        results[userType] = result.success ? 'created' : result.error;
-      } catch (error) {
-        results[userType] = error.message;
-      }
-    }
-    
-    console.log('Test user creation results:', results);
-    return results;
   }
 
   // Clear all authentication data (for development/testing)

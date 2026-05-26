@@ -6,4 +6,14 @@ module.exports = {
     ['@babel/plugin-transform-private-methods', { loose: true }],
     ['@babel/plugin-transform-private-property-in-object', { loose: true }],
   ],
+  env: {
+    // Production builds (Metro sets NODE_ENV=production for release bundles)
+    // strip console.log calls so they don't leak into shipped binaries.
+    // console.warn and console.error survive so Sentry can capture them.
+    production: {
+      plugins: [
+        ['transform-remove-console', { exclude: ['warn', 'error'] }],
+      ],
+    },
+  },
 };

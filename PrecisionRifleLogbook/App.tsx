@@ -18,14 +18,12 @@ import LadderTestScreen from './src/screens/LadderTestScreen.js';
 import AnalyticsScreen from './src/screens/AnalyticsScreen.js';
 import SettingsScreen from './src/screens/SettingsScreen.js';
 import GunProfilesScreen from './src/screens/GunProfilesScreen.js';
-import TestBackendScreen from './src/screens/TestBackendScreen.js';
 import AuthScreen from './src/screens/AuthScreen.js';
 
 // Import services
 import LogbookService from './src/services/LogbookService.js';
 import UnifiedDataService from './src/services/UnifiedDataService.js';
 import { GunProfileService } from './src/services/GunProfileService.js';
-import { testSupabaseConnection } from './src/utils/testSupabase.js';
 
 // Import navigation styles
 import { NavigationStyles, NavigationColors } from './src/styles/NavigationStyles.js';
@@ -150,16 +148,8 @@ const App = () => {
     // Initialize the app
     const initializeApp = async () => {
       try {
-        // Test Supabase connection first
         console.log('🚀 Starting app initialization...');
-        
-        try {
-          const supabaseTest = await testSupabaseConnection();
-          console.log('✅ Supabase connection test:', supabaseTest.success);
-        } catch (error) {
-          console.warn('⚠️ Supabase connection test failed:', error);
-        }
-        
+
         try {
           await LogbookService.initialize();
           console.log('✅ LogbookService initialized');
