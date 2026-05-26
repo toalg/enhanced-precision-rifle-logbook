@@ -1,5 +1,5 @@
 /**
- * Authentication Screen - Firebase Login/Register
+ * Authentication Screen - Supabase Login/Register
  * Production-ready authentication interface
  */
 
