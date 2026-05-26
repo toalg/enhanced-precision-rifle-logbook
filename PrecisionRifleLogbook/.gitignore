@@ -73,3 +73,12 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Environment variables (real secrets) - keep .env.example committed
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env*.local

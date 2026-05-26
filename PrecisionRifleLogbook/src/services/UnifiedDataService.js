@@ -47,19 +47,6 @@ class UnifiedDataService {
     return await this.supabaseService.getLadderTests(limit, offset);
   }
 
-  // Daily Notes (Supabase)
-  async saveDailyNote(noteData) {
-    return await this.supabaseService.saveDailyNote(noteData);
-  }
-
-  async getDailyNote(date) {
-    return await this.supabaseService.getDailyNote(date);
-  }
-
-  async getDailyNotes(limit = 50, offset = 0) {
-    return await this.supabaseService.getDailyNotes(limit, offset);
-  }
-
   // File Upload (Supabase Storage)
   async uploadTargetPhoto(uri, sessionId) {
     return await this.supabaseService.uploadTargetPhoto(uri, sessionId);

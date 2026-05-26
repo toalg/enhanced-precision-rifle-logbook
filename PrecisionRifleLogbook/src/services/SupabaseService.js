@@ -200,53 +200,6 @@ class SupabaseService {
     }
   }
 
-  // Daily Notes (for the journaling feature)
-  async saveDailyNote(noteData) {
-    try {
-      const userId = this.getCurrentUser()?.id;
-      if (!userId) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from(SUPABASE_TABLES.DAILY_NOTES)
-        .upsert([{
-          ...noteData,
-          user_id: userId,
-          updated_at: new Date().toISOString()
-        }], { onConflict: 'user_id,date' })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      this.emit('dailyNoteSaved', { noteId: data.id, note: data });
-      return { success: true, noteId: data.id, note: data };
-    } catch (error) {
-      console.error('Error saving daily note to Supabase:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async getDailyNote(date) {
-    try {
-      const userId = this.getCurrentUser()?.id;
-      if (!userId) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from(SUPABASE_TABLES.DAILY_NOTES)
-        .select('*')
-        .eq('user_id', userId)
-        .eq('date', date)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
-
-      return { success: true, note: data };
-    } catch (error) {
-      console.error('Error fetching daily note from Supabase:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
   // Real-time Subscriptions
   subscribeToSessions(callback) {
     const userId = this.getCurrentUser()?.id;

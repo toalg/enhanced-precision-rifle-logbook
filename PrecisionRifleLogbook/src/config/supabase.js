@@ -1,15 +1,25 @@
 /**
  * Supabase Configuration
- * Replace these placeholder values with your actual Supabase project credentials
+ * Reads SUPABASE_URL and SUPABASE_ANON_KEY from .env via react-native-config.
+ * See .env.example for the schema and .env.development / .env.production
+ * for environment-specific values (neither committed).
  */
 
 import { createClient } from '@supabase/supabase-js';
+import Config from 'react-native-config';
 import { createSafeFetch, createSafeWebSocket } from '../utils/RealtimeClientPatch.js';
 
-// Your Supabase project configuration
-// Get these values from your Supabase Dashboard
-const supabaseUrl = 'https://gbosucljjdpeslmwfjsb.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdib3N1Y2xqamRwZXNsbXdmanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MzkxMTUsImV4cCI6MjA2ODExNTExNX0.rKJF2SqMjuvNezXsXpAwSrunT4Ne0IYr6TsmJ1NwHzo';
+const supabaseUrl = Config.SUPABASE_URL;
+const supabaseAnonKey = Config.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Fail loud in dev; in production builds, missing env values are a build-config bug
+  // that should never reach the user.
+  throw new Error(
+    'Supabase config missing. SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env. ' +
+      'Copy .env.example to .env.development (or .env.production) and fill in values.'
+  );
+}
 
 // Create Supabase client with React Native specific options and safe utilities
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -17,29 +27,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    debug: __DEV__
+    debug: __DEV__,
   },
   realtime: {
     transport: 'websocket',
     timeout: 20000,
     params: {
-      eventsPerSecond: 10
-    }
+      eventsPerSecond: 10,
+    },
   },
   global: {
     headers: {
       'X-Client-Info': 'supabase-js-react-native',
-      'apikey': supabaseAnonKey
+      apikey: supabaseAnonKey,
     },
     fetch: createSafeFetch(),
-    WebSocket: createSafeWebSocket
+    WebSocket: createSafeWebSocket,
   },
   db: {
-    schema: 'public'
-  }
+    schema: 'public',
+  },
 });
 
-// Supabase table names
+// Supabase table names (kept in sync with supabase/migrations/0001_init.sql).
+// Note: `daily_notes` was removed in the v1 prod schema as unused.
 export const SUPABASE_TABLES = {
   USERS: 'users',
   SESSIONS: 'shooting_sessions',
@@ -47,35 +58,21 @@ export const SUPABASE_TABLES = {
   LADDER_CHARGES: 'ladder_charges',
   RIFLE_PROFILES: 'rifle_profiles',
   SETTINGS: 'user_settings',
-  DAILY_NOTES: 'daily_notes',
-  ANALYTICS: 'analytics_events'
+  ANALYTICS: 'analytics_events',
 };
 
-// Supabase storage buckets
+// Supabase storage buckets (kept in sync with the migration).
+// Note: `temp` bucket was removed in the v1 prod schema as unused.
 export const STORAGE_BUCKETS = {
   TARGET_PHOTOS: 'target-photos',
   USER_AVATARS: 'user-avatars',
   EXPORTS: 'exports',
-  TEMP: 'temp'
 };
 
-// Initialize Supabase
+// Initialize Supabase (no-op marker for app startup logging)
 export const initializeSupabase = () => {
-  console.log('Supabase initialized');
+  if (__DEV__) {
+    console.warn(`Supabase initialized: ${supabaseUrl}`);
+  }
   return supabase;
 };
-
-// Database schema helpers
-export const createTables = async () => {
-  // This would typically be done via Supabase migrations
-  // For now, we'll define the schema structure
-  console.log('Database schema defined');
-};
-
-// Row Level Security (RLS) policies
-export const RLS_POLICIES = {
-  // Users can only access their own data
-  USERS_OWN_DATA: 'users can only access their own data',
-  SESSIONS_OWN_DATA: 'users can only access their own sessions',
-  LADDER_TESTS_OWN_DATA: 'users can only access their own ladder tests'
-}; 
