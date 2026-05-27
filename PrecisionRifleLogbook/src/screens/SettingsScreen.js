@@ -9,10 +9,12 @@ import {
   Text,
   ScrollView,
   Alert,
+  Linking,
   StyleSheet,
   ActivityIndicator,
   Share,
 } from 'react-native';
+import Config from 'react-native-config';
 
 import { CommonStyles, Colors, Typography, Spacing } from '../components/common/AppStyles';
 import Button from '../components/common/Button';
@@ -20,6 +22,8 @@ import Card from '../components/common/Card';
 import GunProfilesScreen from './GunProfilesScreen';
 
 import LogbookService from '../services/LogbookService';
+import { supabase } from '../config/supabase';
+import { captureException } from '../services/sentry';
 import { useProfiles } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -171,6 +175,64 @@ const SettingsScreen = () => {
               loadSettings(); // Refresh counts
             } catch (error) {
               Alert.alert('Error', 'Failed to clear data');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Account deletion - required by Apple App Store Guideline 5.1.1(v).
+  // Two-step confirmation, then calls the delete_my_account() Postgres RPC
+  // (SECURITY DEFINER, defined in supabase/migrations/0001_init.sql) which
+  // cascade-deletes every row owned by the user across all tables AND
+  // deletes the auth.users row. The session becomes invalid immediately
+  // after, and we sign out to route the user back to AuthScreen.
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all your data — shooting sessions, ladder tests, rifle profiles, settings, everything. This cannot be undone.\n\nYour email will remain free for future signup.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue…',
+          style: 'destructive',
+          onPress: () => confirmDeleteAccount(),
+        },
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Are you absolutely sure?',
+      'There is no recovery. All your data will be permanently deleted from our servers.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const { error } = await supabase.rpc('delete_my_account');
+              if (error) throw error;
+
+              // Account row is gone; the session token is now invalid. Sign out
+              // cleans up local state and routes back to AuthScreen via AuthContext.
+              await signOut();
+
+              Alert.alert(
+                'Account Deleted',
+                'Your account and all data have been permanently deleted.'
+              );
+            } catch (error) {
+              captureException(error, { tags: { action: 'delete_account' } });
+              Alert.alert(
+                'Error',
+                'Failed to delete account. Please check your connection and try again. If the problem persists, contact support.'
+              );
+              setLoading(false);
             }
           },
         },
@@ -336,17 +398,76 @@ const SettingsScreen = () => {
     </Card>
   );
 
+  // Open an external URL in the system browser. Logs a Sentry breadcrumb
+  // if the URL is missing (would happen if .env wasn't loaded properly).
+  const openExternalUrl = async (url, label) => {
+    if (!url) {
+      captureException(new Error(`Missing URL for ${label}`), { tags: { action: 'open_legal_url', label } });
+      Alert.alert(
+        'Not Available',
+        `The ${label} link isn't configured for this build. Please contact support.`
+      );
+      return;
+    }
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert('Cannot Open Link', `Unable to open ${url}`);
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (error) {
+      captureException(error, { tags: { action: 'open_legal_url', label } });
+      Alert.alert('Error', `Failed to open ${label}.`);
+    }
+  };
+
+  const renderLegalCard = () => (
+    <Card variant="dark">
+      <Text style={styles.sectionTitle}>📄 Legal</Text>
+      <Text style={styles.sectionDescription}>
+        Review how your data is handled and the terms of service.
+      </Text>
+
+      <View style={styles.buttonRow}>
+        <Button
+          title="Privacy Policy"
+          onPress={() => openExternalUrl(Config.PRIVACY_POLICY_URL, 'Privacy Policy')}
+          variant="secondary"
+          style={styles.halfWidthButton}
+          size="medium"
+        />
+        <Button
+          title="Terms of Service"
+          onPress={() => openExternalUrl(Config.TERMS_OF_SERVICE_URL, 'Terms of Service')}
+          variant="secondary"
+          style={styles.halfWidthButton}
+          size="medium"
+        />
+      </View>
+    </Card>
+  );
+
   const renderDangerZoneCard = () => (
     <Card variant="error">
       <Text style={styles.dangerSectionTitle}>⚠️ Danger Zone</Text>
       <Text style={styles.dangerSectionDescription}>
-        This will permanently delete all your data. Use with caution.
+        Destructive actions. These cannot be undone.
       </Text>
-      
+
       <View style={styles.buttonContainer}>
         <Button
           title="Clear All Data"
           onPress={handleClearAllData}
+          variant="error"
+          size="medium"
+        />
+      </View>
+
+      <View style={[styles.buttonContainer, { marginTop: Spacing.md }]}>
+        <Button
+          title="Delete Account"
+          onPress={handleDeleteAccount}
           variant="error"
           size="medium"
         />
@@ -439,6 +560,7 @@ const SettingsScreen = () => {
       {renderCloudSyncCard()}
       {renderDataManagementCard()}
       {renderStorageInfoCard()}
+      {renderLegalCard()}
       {renderDangerZoneCard()}
       {renderAboutCard()}
     </>
