@@ -6,6 +6,11 @@
 // Import global patches FIRST to fix constructor issues
 import './src/utils/GlobalPatches';
 
+// Init Sentry as early as possible so it can catch errors during the rest
+// of the import chain. No-op if SENTRY_DSN isn't set.
+import { initSentry, wrap as withSentry, ErrorBoundary as SentryErrorBoundary } from './src/services/sentry';
+initSentry();
+
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -208,9 +213,28 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={NavigationStyles.safeAreaContainer}>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <SentryErrorBoundary
+          fallback={({ resetError }) => (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#001233' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '600', marginBottom: 12 }}>
+                Something went wrong
+              </Text>
+              <Text style={{ color: '#B8C5D6', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+                The error has been reported. Please restart the app, and contact support if it keeps happening.
+              </Text>
+              <Text
+                onPress={resetError}
+                style={{ color: '#4DA3FF', fontSize: 16, padding: 12 }}
+              >
+                Try again
+              </Text>
+            </View>
+          )}
+        >
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </SentryErrorBoundary>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -218,4 +242,4 @@ const App = () => {
 
 // Styles moved to NavigationStyles.js
 
-export default App;
+export default withSentry(App);
