@@ -1,4 +1,17 @@
 {
   "name": "PrecisionRifleLogbook",
-  "displayName": "PrecisionRifleLogbook"
+  "displayName": "PrecisionRifleLogbook",
+  "expo": {
+    "name": "Precision Rifle Logbook",
+    "slug": "precision-rifle-logbook",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "com.glenntoal.precisionriflelogbook",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.precisionriflelogbook",
+      "versionCode": 1
+    }
+  }
 }
