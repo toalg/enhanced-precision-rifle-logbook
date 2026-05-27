@@ -12,6 +12,11 @@
     "android": {
       "package": "com.precisionriflelogbook",
       "versionCode": 1
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5212df0d-983d-46d5-804c-96e920d8b530"
+      }
     }
   }
 }
