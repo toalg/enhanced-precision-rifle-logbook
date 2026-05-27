@@ -113,15 +113,12 @@ const AppContent = () => {
               }}
             />
             
-            <Tab.Screen 
-              name="analytics" 
+            <Tab.Screen
+              name="analytics"
               component={AnalyticsScreen}
               options={{
                 title: 'Analytics',
-                headerTitle: 'Pro Analytics',
-                headerRight: () => (
-                  <Text style={NavigationStyles.proBadge}>PRO</Text>
-                ),
+                headerTitle: 'Analytics',
               }}
             />
             

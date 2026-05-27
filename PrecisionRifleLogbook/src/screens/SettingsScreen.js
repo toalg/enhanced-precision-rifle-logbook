@@ -25,7 +25,6 @@ import { useAuth } from '../context/AuthContext';
 
 const SettingsScreen = () => {
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [ladderCount, setLadderCount] = useState(0);
@@ -42,21 +41,14 @@ const SettingsScreen = () => {
 
   useEffect(() => {
     loadSettings();
-    
-    // Listen for service events
-    const handlePremiumEnabled = () => {
-      setIsPremium(true);
-    };
 
     const handleCloudSyncToggled = ({ enabled }) => {
       setCloudSyncEnabled(enabled);
     };
 
-    LogbookService.addEventListener('premiumEnabled', handlePremiumEnabled);
     LogbookService.addEventListener('cloudSyncToggled', handleCloudSyncToggled);
-    
+
     return () => {
-      LogbookService.removeEventListener('premiumEnabled', handlePremiumEnabled);
       LogbookService.removeEventListener('cloudSyncToggled', handleCloudSyncToggled);
     };
   }, []);
@@ -65,15 +57,13 @@ const SettingsScreen = () => {
     try {
       setLoading(true);
       
-      const [premium, cloudSync, sessions, ladders, unit] = await Promise.all([
-        LogbookService.checkPremiumStatus(),
+      const [cloudSync, sessions, ladders, unit] = await Promise.all([
         LogbookService.getCloudSyncSetting(),
         LogbookService.getShootingSessions(1000, 0),
         LogbookService.getLadderTests(100, 0),
         LogbookService.getBallisticUnit(), // Get saved unit preference
       ]);
-      
-      setIsPremium(premium);
+
       setCloudSyncEnabled(cloudSync);
       setSessionCount(sessions.length);
       setLadderCount(ladders.length);
@@ -85,34 +75,8 @@ const SettingsScreen = () => {
     }
   };
 
-  const handlePremiumUpgrade = () => {
-    Alert.alert(
-      'Upgrade to Premium',
-      'Unlock cloud sync, advanced analytics, and premium features!',
-      [
-        {
-          text: 'Enable Premium (Demo)',
-          onPress: async () => {
-            try {
-              await LogbookService.enablePremium();
-              Alert.alert('Premium Activated!', 'Cloud sync and advanced features are now available');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to enable premium features');
-            }
-          },
-        },
-        { text: 'Maybe Later', style: 'cancel' },
-      ]
-    );
-  };
-
   const handleCloudSyncToggle = async () => {
     try {
-      if (!isPremium) {
-        handlePremiumUpgrade();
-        return;
-      }
-
       const newState = await LogbookService.toggleCloudSync();
       
       if (newState) {
@@ -257,35 +221,8 @@ const SettingsScreen = () => {
     );
   };
 
-  const renderPremiumStatusCard = () => (
-    <Card variant={isPremium ? "success" : "dark"}>
-      <Text style={styles.sectionTitle}>💎 Premium Status</Text>
-      <View style={styles.contentContainer}>
-        <Text style={styles.statusText}>
-          {isPremium ? 'Premium Active' : 'Free Version'}
-        </Text>
-        <Text style={styles.sectionDescription}>
-          {isPremium 
-            ? 'All premium features unlocked' 
-            : 'Local storage only - your data stays on your device'
-          }
-        </Text>
-      </View>
-      {!isPremium && (
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Upgrade to Premium"
-            onPress={handlePremiumUpgrade}
-            variant="primary"
-            size="medium"
-          />
-        </View>
-      )}
-    </Card>
-  );
-
   const renderCloudSyncCard = () => (
-    <Card variant={!isPremium ? "dark" : (cloudSyncEnabled ? "success" : "dark")}>
+    <Card variant={cloudSyncEnabled ? "success" : "dark"}>
       <Text style={styles.sectionTitle}>☁️ Cloud Backup & Sync</Text>
       <View style={styles.contentContainer}>
         <Text style={styles.statusText}>
@@ -295,23 +232,16 @@ const SettingsScreen = () => {
           Automatically backup your data to the cloud and sync across devices.
         </Text>
       </View>
-      
+
       <View style={styles.buttonContainer}>
         <Button
           title={cloudSyncEnabled ? 'Cloud Sync Enabled' : 'Enable Cloud Sync'}
           onPress={handleCloudSyncToggle}
           variant={cloudSyncEnabled ? 'success' : 'primary'}
-          disabled={!isPremium}
           size="medium"
         />
       </View>
-      
-      {!isPremium && (
-        <Text style={styles.premiumNote}>
-          Premium feature - upgrade to enable cloud sync
-        </Text>
-      )}
-      
+
       <Text style={styles.securityNote}>
         <Text style={styles.bold}>Security:</Text> All data is encrypted before cloud storage
       </Text>
@@ -399,7 +329,7 @@ const SettingsScreen = () => {
         <View style={styles.storageItem}>
           <Text style={styles.storageLabel}>Storage Type</Text>
           <Text style={styles.storageValue}>
-            {isPremium ? 'Cloud + Local' : 'Local Only'}
+            {cloudSyncEnabled ? 'Cloud + Local' : 'Local Only'}
           </Text>
         </View>
       </View>
@@ -506,7 +436,6 @@ const SettingsScreen = () => {
       {renderAccountCard()}
       {renderGunProfilesCard()}
       {renderBallisticUnitsCard()}
-      {renderPremiumStatusCard()}
       {renderCloudSyncCard()}
       {renderDataManagementCard()}
       {renderStorageInfoCard()}

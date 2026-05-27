@@ -26,49 +26,31 @@ const { width } = Dimensions.get('window');
 
 const AnalyticsScreen = () => {
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
   const [ladderTests, setLadderTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' or 'premium'
+  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' or 'ladder'
 
   useEffect(() => {
     initializeScreen();
-    
-    // Listen for premium status changes
-    const handlePremiumEnabled = () => {
-      setIsPremium(true);
-    };
-
-    LogbookService.addEventListener('premiumEnabled', handlePremiumEnabled);
-    
-    return () => {
-      LogbookService.removeEventListener('premiumEnabled', handlePremiumEnabled);
-    };
   }, []);
 
   const initializeScreen = async () => {
     try {
       setLoading(true);
-      
+
       // Load shooting sessions for analytics
       const sessionData = await LogbookService.getShootingSessions(50, 0);
       setSessions(sessionData);
-      
-      // Check premium status
-      const premium = await LogbookService.checkPremiumStatus();
-      setIsPremium(premium);
-      
-      if (premium) {
-        // Load ladder tests for analysis
-        const tests = await LogbookService.getLadderTests(10, 0);
-        setLadderTests(tests);
-        
-        // Auto-select most recent test
-        if (tests.length > 0) {
-          analyzeTest(tests[0]);
-        }
+
+      // Load ladder tests for analysis
+      const tests = await LogbookService.getLadderTests(10, 0);
+      setLadderTests(tests);
+
+      // Auto-select most recent test
+      if (tests.length > 0) {
+        analyzeTest(tests[0]);
       }
     } catch (error) {
       console.error('Error initializing analytics:', error);
@@ -86,28 +68,6 @@ const AnalyticsScreen = () => {
       console.error('Error analyzing test:', error);
       Alert.alert('Error', 'Failed to analyze test data');
     }
-  };
-
-  const showPremiumUpgrade = () => {
-    Alert.alert(
-      '🚀 Upgrade to Premium',
-      'Unlock advanced ballistic analytics, velocity charts, and professional load analysis tools!',
-      [
-        {
-          text: 'Enable Premium (Demo)',
-          onPress: async () => {
-            try {
-              await LogbookService.enablePremium();
-              Alert.alert('Premium Activated!', 'Advanced analytics features are now available');
-              initializeScreen();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to enable premium features');
-            }
-          },
-        },
-        { text: 'Maybe Later', style: 'cancel' },
-      ]
-    );
   };
 
   const renderVelocityChart = () => {
@@ -322,11 +282,11 @@ const AnalyticsScreen = () => {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.tab, activeTab === 'premium' && styles.activeTab]}
-        onPress={() => setActiveTab('premium')}
+        style={[styles.tab, activeTab === 'ladder' && styles.activeTab]}
+        onPress={() => setActiveTab('ladder')}
       >
-        <Text style={[styles.tabText, activeTab === 'premium' && styles.activeTabText]}>
-          🚀 Premium Features
+        <Text style={[styles.tabText, activeTab === 'ladder' && styles.activeTabText]}>
+          🚀 Ladder Analysis
         </Text>
       </TouchableOpacity>
     </View>
@@ -334,49 +294,6 @@ const AnalyticsScreen = () => {
 
   const renderSessionAnalytics = () => (
     <SessionAnalytics sessions={sessions} />
-  );
-
-  const renderFreeTier = () => (
-    <View style={styles.upgradeContainer}>
-      <Card variant="primary" style={styles.upgradeCard}>
-        <Text style={styles.upgradeTitle}>📊 Professional Analytics</Text>
-        <Text style={styles.upgradeSubtitle}>PRO Feature</Text>
-        
-        <View style={styles.featuresList}>
-          <Text style={styles.featureItem}>📈 Interactive velocity charts</Text>
-          <Text style={styles.featureItem}>🎯 Flat spot detection & analysis</Text>
-          <Text style={styles.featureItem}>📊 Advanced statistical analysis</Text>
-          <Text style={styles.featureItem}>⚖️ Professional load recommendations</Text>
-          <Text style={styles.featureItem}>🌡️ Environmental correlation analysis</Text>
-          <Text style={styles.featureItem}>📋 Comprehensive ballistic reports</Text>
-        </View>
-        
-        <Button
-          title="🚀 Upgrade to Premium"
-          onPress={showPremiumUpgrade}
-          variant="primary"
-          size="large"
-          style={styles.upgradeButton}
-        />
-        
-        <Text style={styles.upgradeNote}>
-          Unlock advanced ballistic analytics and professional load development tools
-        </Text>
-      </Card>
-      
-      <Card style={styles.demoCard}>
-        <Text style={styles.demoTitle}>📊 Preview: Velocity Chart</Text>
-        <View style={styles.demoChart}>
-          <Text style={styles.demoText}>
-            Load ladder test data to see charge weight vs velocity analysis with:
-          </Text>
-          <Text style={styles.demoFeature}>• Interactive charts and graphs</Text>
-          <Text style={styles.demoFeature}>• Velocity node identification</Text>
-          <Text style={styles.demoFeature}>• Statistical consistency analysis</Text>
-          <Text style={styles.demoFeature}>• Professional load recommendations</Text>
-        </View>
-      </Card>
-    </View>
   );
 
   if (loading) {
@@ -392,8 +309,7 @@ const AnalyticsScreen = () => {
     <View style={CommonStyles.container}>
       <View style={CommonStyles.contentContainer}>
         {renderTabSelector()}
-        {activeTab === 'sessions' ? renderSessionAnalytics() : 
-         (isPremium ? renderPremiumFeatures() : renderFreeTier())}
+        {activeTab === 'sessions' ? renderSessionAnalytics() : renderPremiumFeatures()}
       </View>
     </View>
   );

@@ -10,7 +10,10 @@ import { LadderTest, LadderCharge } from '../models/LadderTest';
 class LogbookService {
   constructor() {
     this.isInitialized = false;
-    this.isPremium = false;
+    // v1 ships fully free - every feature unlocked. The premium_status column
+    // stays in the schema so we can re-introduce IAP in v1.1 without a
+    // migration. See plan section "Phase 1.4: Strip premium gates for free v1".
+    this.isPremium = true;
     this.listeners = new Map(); // Event listeners for UI updates
   }
 
@@ -19,7 +22,6 @@ class LogbookService {
 
     try {
       await DatabaseService.initialize();
-      this.isPremium = await this.checkPremiumStatus();
       this.isInitialized = true;
       console.log('LogbookService initialized successfully');
     } catch (error) {
@@ -182,32 +184,23 @@ class LogbookService {
   }
 
   // Premium Features Management
+  // v1 ships fully free. These methods are kept for v1.1 IAP integration
+  // (so UI code referencing isPremium / enablePremium / checkPremiumStatus
+  // doesn't need to be re-added) but they're effectively no-ops here.
   async checkPremiumStatus() {
-    try {
-      const status = await DatabaseService.getSetting('premium_status', 'false');
-      return status === 'true';
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-      return false;
-    }
+    return true;
   }
 
   async enablePremium() {
-    try {
-      await DatabaseService.setSetting('premium_status', 'true');
-      this.isPremium = true;
-      this.emit('premiumEnabled', { isPremium: true });
-      return true;
-    } catch (error) {
-      console.error('Error enabling premium:', error);
-      throw error;
-    }
+    this.isPremium = true;
+    this.emit('premiumEnabled', { isPremium: true });
+    return true;
   }
 
   async getCloudSyncSetting() {
     try {
       const setting = await DatabaseService.getSetting('cloud_sync_enabled', 'false');
-      return setting === 'true' && this.isPremium;
+      return setting === 'true';
     } catch (error) {
       console.error('Error getting cloud sync setting:', error);
       return false;
@@ -216,10 +209,6 @@ class LogbookService {
 
   async toggleCloudSync() {
     try {
-      if (!this.isPremium) {
-        throw new Error('Premium subscription required for cloud sync');
-      }
-
       const currentSetting = await this.getCloudSyncSetting();
       const newSetting = !currentSetting;
       
